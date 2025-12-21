@@ -1,0 +1,201 @@
+---
+import { PUBLIC_MAPTILER_API_KEY } from "astro:env/client";
+
+interface Props {
+  gpxUrl?: string;
+  center?: [number, number];
+  zoom?: number;
+}
+
+const { gpxUrl, center = [-122.4194, 37.7749], zoom = 13 } = Astro.props;
+// Generate a unique ID for this MapViewer instance
+const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
+---
+
+<figure>
+  <div
+    id={mapId}
+    data-gpx-url={gpxUrl}
+    data-center={JSON.stringify(center)}
+    data-zoom={zoom}
+  >
+  </div>
+  <figcaption>
+    Map data <a href="https://www.openstreetmap.org/copyright"
+      >© OpenStreetMap contributors</a
+    >. Tiles by <a href="https://www.maptiler.com/">MapTiler</a>. Rendered with <a
+      href="https://maplibre.org/">MapLibre</a
+    >.
+  </figcaption>
+</figure>
+
+<style>
+  figure {
+    width: 100%;
+    margin: 0;
+    figcaption {
+      font-size: 12px;
+      color: #666;
+      text-align: center;
+      margin-top: 10px;
+    }
+  }
+  [id^="map-viewer-"] {
+    width: 100%;
+    height: 400px;
+  }
+</style>
+
+<script>
+  import maplibregl from "maplibre-gl";
+  import "maplibre-gl/dist/maplibre-gl.css";
+
+  const apiKey = import.meta.env.PUBLIC_MAPTILER_API_KEY;
+
+  // Find all map containers instead of just one
+  const mapContainers = document.querySelectorAll('[id^="map-viewer-"]');
+
+  if (!apiKey) {
+    console.error(
+      "MapTiler API key is not set. Please add PUBLIC_MAPTILER_API_KEY to your .env file"
+    );
+    mapContainers.forEach((mapContainer) => {
+      mapContainer.innerHTML =
+        '<div style="padding: 20px; text-align: center; color: #666;">MapTiler API key is not configured. Please add PUBLIC_MAPTILER_API_KEY to your .env file.</div>';
+    });
+  } else {
+    // Initialize each map container
+    mapContainers.forEach((mapContainer) => {
+      const centerAttr = mapContainer.getAttribute("data-center");
+      const zoomAttr = mapContainer.getAttribute("data-zoom");
+      const defaultCenter = centerAttr
+        ? JSON.parse(centerAttr)
+        : [-122.4194, 37.7749];
+      const defaultZoom = zoomAttr ? parseInt(zoomAttr, 10) : 13;
+      const gpxUrl = mapContainer.getAttribute("data-gpx-url");
+
+      // Helper function to calculate bounds from track points
+      const calculateBounds = (
+        trackPoints: [number, number][]
+      ): [[number, number], [number, number]] => {
+        return trackPoints.reduce(
+          (acc, coord) => {
+            return [
+              [Math.min(acc[0][0], coord[0]), Math.min(acc[0][1], coord[1])],
+              [Math.max(acc[1][0], coord[0]), Math.max(acc[1][1], coord[1])],
+            ] as [[number, number], [number, number]];
+          },
+          [
+            [trackPoints[0][0], trackPoints[0][1]],
+            [trackPoints[0][0], trackPoints[0][1]],
+          ] as [[number, number], [number, number]]
+        );
+      };
+
+      // Helper function to get center from bounds
+      const getCenterFromBounds = (
+        bounds: [[number, number], [number, number]]
+      ) => {
+        return [
+          (bounds[0][0] + bounds[1][0]) / 2,
+          (bounds[0][1] + bounds[1][1]) / 2,
+        ] as [number, number];
+      };
+
+      // Initialize map - if GPX URL is provided, fetch and parse it first
+      const initializeMap = async () => {
+        let initialCenter = defaultCenter;
+        let initialZoom = defaultZoom;
+        let trackPoints: [number, number][] = [];
+
+        // If GPX URL is provided, fetch and parse it before creating the map
+        if (gpxUrl) {
+          try {
+            const response = await fetch(gpxUrl);
+            const gpxText = await response.text();
+
+            // Parse GPX
+            const parser = new DOMParser();
+            const gpxDoc = parser.parseFromString(gpxText, "text/xml");
+            trackPoints = Array.from(gpxDoc.querySelectorAll("trkpt")).map(
+              (pt) => {
+                const lat = parseFloat(pt.getAttribute("lat") || "0");
+                const lon = parseFloat(pt.getAttribute("lon") || "0");
+                return [lon, lat];
+              }
+            );
+
+            if (trackPoints.length > 0) {
+              // Calculate bounds and center from GPX track
+              const bounds = calculateBounds(trackPoints);
+              initialCenter = getCenterFromBounds(bounds);
+              // Use a reasonable zoom level - you can adjust this
+              initialZoom = 13;
+            }
+          } catch (error) {
+            console.error("Error loading GPX file:", error);
+          }
+        }
+
+        // Create map with the calculated center
+        const map = new maplibregl.Map({
+          container: mapContainer.id,
+          style: `https://api.maptiler.com/maps/outdoor/style.json?key=${apiKey}`,
+          center: initialCenter,
+          zoom: initialZoom,
+          interactive: false, // Disables all interactions
+          boxZoom: false,
+          dragRotate: false,
+          dragPan: false,
+          doubleClickZoom: false,
+          keyboard: false,
+          scrollZoom: false,
+          touchZoomRotate: false,
+          attributionControl: false,
+        });
+
+        // If we have GPX track points, add them to the map
+        if (gpxUrl && trackPoints.length > 0) {
+          map.on("load", () => {
+            // Add GPX track as a line
+            map.addSource("gpx-track", {
+              type: "geojson",
+              data: {
+                type: "Feature",
+                properties: {},
+                geometry: {
+                  type: "LineString",
+                  coordinates: trackPoints,
+                },
+              },
+            });
+
+            map.addLayer({
+              id: "gpx-track-layer",
+              type: "line",
+              source: "gpx-track",
+              layout: {
+                "line-join": "round",
+                "line-cap": "round",
+              },
+              paint: {
+                "line-color": "#ff0000",
+                "line-width": 3,
+                "line-opacity": 0.8,
+              },
+            });
+
+            // Fit map to GPX track bounds without animation (duration: 0)
+            const bounds = calculateBounds(trackPoints);
+            map.fitBounds(bounds, {
+              padding: 50,
+              duration: 0, // No animation - instant fit
+            });
+          });
+        }
+      };
+
+      initializeMap();
+    });
+  }
+</script>
