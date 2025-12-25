@@ -1,14 +1,14 @@
 ---
 import { getCollection } from "astro:content";
 
-const classifieds = await getCollection("classifieds");
+const trove = await getCollection("trove");
 ---
 
-<section id="classifieds">
-  <h2>Classifieds</h2>
+<section id="trove">
+  <h2>Trove</h2>
   <ul>
     {
-      classifieds.map((entry) => (
+      trove.map((entry) => (
         <li>
           <a href={entry.data.url} target="_blank" rel="noopener noreferrer">
             {entry.data.title}

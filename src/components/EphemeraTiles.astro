@@ -49,13 +49,6 @@ function r2ImagePath(slug: string) {
   return `ephemera/${slug}.jpg`;
 }
 
-// Helper to get image label based on position
-function getImageLabel(index: number, total: number): string {
-  if (index === 0) return ""; // Front/main image
-  if (total === 2) return " (back)";
-  if (total === 3) return index === 1 ? " (inside)" : " (back)";
-  return "";
-}
 ---
 
 {
@@ -71,21 +64,23 @@ function getImageLabel(index: number, total: number): string {
           ]}
           data-id={item.id}
         >
-          <div class="ephemera-images">
-            {item.data.images.map((slug, idx) => (
+          <a href={`/ephemera/${item.id}`} class="ephemera-link">
+            
               <R2Image
-                src={r2ImagePath(slug)}
+                src={r2ImagePath(item.data.images[0])}
                 width={400}
                 height={300}
-                alt={`${item.data.name}${getImageLabel(idx, item.data.images.length)}`}
+                alt={item.data.name}
                 class="ephemera-image"
                 sizes="(max-width: 640px) 100vw, 320px"
               />
-            ))}
-          </div>
+            
+          </a>
 
           <div class="ephemera-content">
-            <h3 class="ephemera-name">{item.data.name}</h3>
+            <h3 class="ephemera-name">
+              <a href={`/ephemera/${item.id}`}>{item.data.name}</a>
+            </h3>
 
             <div class="ephemera-meta">
               <time datetime={item.data.date.toISOString()}>
@@ -179,6 +174,7 @@ function getImageLabel(index: number, total: number): string {
     object-fit: cover;
     max-width: 100%;
     height: auto;
+    transition: transform 0.2s ease;
   }
 
   .ephemera-content {
@@ -187,11 +183,29 @@ function getImageLabel(index: number, total: number): string {
     gap: 0.5rem;
   }
 
+  .ephemera-link {
+    display: block;
+    text-decoration: none;
+  }
+
+  .ephemera-link:hover .ephemera-image {
+    transform: scale(1.02);
+  }
+
   .ephemera-name {
     margin: 0;
     font-size: 1.25rem;
     font-weight: 600;
+  }
+
+  .ephemera-name a {
     color: #111827;
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .ephemera-name a:hover {
+    color: #4f46e5;
   }
 
   .ephemera-meta {

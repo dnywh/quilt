@@ -1,6 +1,6 @@
 ---
-import Layout from "../layouts/Layout.astro";
-import Ephemera from "../components/Ephemera.astro";
+import Layout from "../../layouts/Layout.astro";
+import EphemeraTiles from "../../components/EphemeraTiles.astro";
 import { getCollection } from "astro:content";
 
 // Get total count for the header (all items are visible, hidden ones are in separate file)
@@ -18,7 +18,7 @@ const count = allItems.length;
       </p>
     </header>
 
-    <Ephemera />
+    <EphemeraTiles />
   </main>
 </Layout>
 
@@ -58,4 +58,3 @@ const count = allItems.length;
     }
   }
 </style>
-

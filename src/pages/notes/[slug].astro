@@ -1,0 +1,44 @@
+---
+import { getCollection, render } from "astro:content";
+import Layout from "../../layouts/Layout.astro";
+import MapViewer from "../../components/MapViewer.astro";
+
+export async function getStaticPaths() {
+  const notes = await getCollection("notes");
+  return notes.map((note) => ({
+    params: { slug: note.id },
+    props: { note },
+  }));
+}
+
+const { note } = Astro.props;
+const { Content } = await render(note);
+---
+
+<Layout title={note.data.title}>
+  <article>
+    <header>
+      <h1>{note.data.title}</h1>
+      <time datetime={note.data.date.toISOString()}>
+        {
+          note.data.date.toLocaleDateString("en-AU", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })
+        }
+      </time>
+    </header>
+
+    {
+      note.data.gpxUrl && (
+        <section>
+          <h2>Route</h2>
+          <MapViewer gpxUrl={note.data.gpxUrl} />
+        </section>
+      )
+    }
+
+    <Content />
+  </article>
+</Layout>

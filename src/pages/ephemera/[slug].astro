@@ -1,0 +1,262 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import R2Image from "../../components/R2Image.astro";
+import { getCollection } from "astro:content";
+
+export async function getStaticPaths() {
+  const ephemeraItems = await getCollection("ephemera");
+
+  return ephemeraItems.map((item) => ({
+    params: { slug: item.id },
+    props: { item },
+  }));
+}
+
+const { item } = Astro.props;
+
+// Helper to format date
+function formatDate(date: Date) {
+  return date.toLocaleDateString("en-AU", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+// Helper to build R2 image path
+function r2ImagePath(slug: string) {
+  return `ephemera/${slug}.jpg`;
+}
+
+// Helper to get image label based on position
+function getImageLabel(index: number, total: number): string {
+  if (index === 0) return "Front";
+  if (total === 2) return "Back";
+  if (total === 3) return index === 1 ? "Inside" : "Back";
+  return `Image ${index + 1}`;
+}
+---
+
+<Layout title={`${item.data.name} — Ephemera`}>
+  <main class="ephemera-detail">
+    <nav class="ephemera-nav">
+      <a href="/ephemera" class="back-link">
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 20 20"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M12 4l-6 6 6 6"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"></path>
+        </svg>
+        Back to collection
+      </a>
+    </nav>
+
+    <article class="ephemera-item">
+      <header class="ephemera-header">
+        <h1 class="ephemera-name">{item.data.name}</h1>
+
+        <div class="ephemera-meta">
+          <time datetime={item.data.date.toISOString()}>
+            {formatDate(item.data.date)}
+          </time>
+          {
+            item.data.venue && (
+              <span class="ephemera-venue">{item.data.venue}</span>
+            )
+          }
+          {
+            item.data.location && (
+              <span class="ephemera-location">{item.data.location}</span>
+            )
+          }
+          {
+            item.data.country && (
+              <span class="ephemera-country">{item.data.country}</span>
+            )
+          }
+        </div>
+
+        {
+          item.data.tags.length > 0 && (
+            <ul class="ephemera-tags">
+              {item.data.tags.map((tag: string) => (
+                <li class="ephemera-tag">{tag}</li>
+              ))}
+            </ul>
+          )
+        }
+      </header>
+
+      <div class="ephemera-images">
+        {
+          item.data.images.map((slug: string, idx: number) => (
+            <figure class="ephemera-figure">
+              <R2Image
+                src={r2ImagePath(slug)}
+                width={800}
+                height={600}
+                alt={`${item.data.name} — ${getImageLabel(idx, item.data.images.length)}`}
+                class="ephemera-image"
+                sizes="(max-width: 640px) 100vw, (max-width: 900px) 80vw, 700px"
+              />
+              {item.data.images.length > 1 && (
+                <figcaption class="ephemera-caption">
+                  {getImageLabel(idx, item.data.images.length)}
+                </figcaption>
+              )}
+            </figure>
+          ))
+        }
+      </div>
+
+      {
+        item.data.notes && (
+          <aside class="ephemera-notes">
+            <p>{item.data.notes}</p>
+          </aside>
+        )
+      }
+    </article>
+  </main>
+</Layout>
+
+<style>
+  .ephemera-detail {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1rem 4rem;
+  }
+
+  .ephemera-nav {
+    margin-bottom: 2rem;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.9375rem;
+    color: #6b7280;
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .back-link:hover {
+    color: #111827;
+  }
+
+  .ephemera-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .ephemera-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .ephemera-name {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #111827;
+    letter-spacing: -0.02em;
+  }
+
+  .ephemera-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    font-size: 1rem;
+    color: #6b7280;
+  }
+
+  .ephemera-meta time {
+    font-weight: 500;
+  }
+
+  .ephemera-venue::before,
+  .ephemera-location::before,
+  .ephemera-country::before {
+    content: "•";
+    margin-right: 0.5rem;
+    opacity: 0.5;
+  }
+
+  .ephemera-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    list-style: none;
+    margin: 0.5rem 0 0;
+    padding: 0;
+  }
+
+  .ephemera-tag {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8125rem;
+    background: #f3f4f6;
+    color: #374151;
+    border-radius: 9999px;
+  }
+
+  .ephemera-images {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .ephemera-figure {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .ephemera-image {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    background: #f9fafb;
+  }
+
+  .ephemera-caption {
+    font-size: 0.875rem;
+    color: #9ca3af;
+    text-align: center;
+  }
+
+  .ephemera-notes {
+    padding: 1.25rem 1.5rem;
+    background: #fefce8;
+    border-radius: 8px;
+    border-left: 3px solid #facc15;
+  }
+
+  .ephemera-notes p {
+    margin: 0;
+    font-size: 0.9375rem;
+    color: #713f12;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 640px) {
+    .ephemera-detail {
+      padding: 1.5rem 1rem 3rem;
+    }
+
+    .ephemera-name {
+      font-size: 1.5rem;
+    }
+  }
+</style>

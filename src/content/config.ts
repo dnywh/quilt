@@ -1,12 +1,26 @@
 import { defineCollection, z } from "astro:content";
-import classifiedsData from "./classifieds/classifieds.json";
+import { glob } from "astro/loaders";
+import troveData from "./trove/trove.json";
+import soundscapesData from "./soundscapes/soundscapes.json";
 import ephemeraData from "./ephemera/ephemera.json";
 
-// Classifieds
-const classifiedsCollection = defineCollection({
+// Notes (MDX blog posts with inline components)
+const notesCollection = defineCollection({
+  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/notes" }),
+  schema: z.object({
+    title: z.string(),
+    date: z.coerce.date(),
+    description: z.string().optional(),
+    tags: z.array(z.string()).optional(),
+    gpxUrl: z.string().optional(), // GPX file for a map (rendered in layout)
+  }),
+});
+
+// Trove
+const troveCollection = defineCollection({
   loader: async () => {
     // Read from a single JSON file containing an array of entries
-    return (classifiedsData as Array<Record<string, unknown>>).map(
+    return (troveData as Array<Record<string, unknown>>).map(
       (entry, index) => ({
         id: (entry.id as string | undefined) || `entry-${index}`,
         title: entry.title as string,
@@ -21,6 +35,31 @@ const classifiedsCollection = defineCollection({
     url: z.string().url(),
     description: z.string().optional(),
     tags: z.array(z.string()).optional(),
+  }),
+});
+
+// Soundscapes
+const soundscapesCollection = defineCollection({
+  loader: async () => {
+    return (soundscapesData as Array<Record<string, unknown>>).map((entry) => ({
+      id: (entry.file as string).replace(/\.[^.]+$/, ""), // Derive ID from filename
+      title: entry.title as string,
+      date: entry.date as string,
+      file: entry.file as string,
+      location: entry.location as string,
+      country: entry.country as string,
+      tags: entry.tags as string[] | undefined,
+      notes: entry.notes as string | undefined,
+    }));
+  },
+  schema: z.object({
+    title: z.string(),
+    date: z.coerce.date(),
+    file: z.string(),
+    location: z.string(),
+    country: z.string(),
+    tags: z.array(z.string()).optional(),
+    notes: z.string().optional(),
   }),
 });
 
@@ -54,6 +93,8 @@ const ephemeraCollection = defineCollection({
 });
 
 export const collections = {
-  classifieds: classifiedsCollection,
+  trove: troveCollection,
   ephemera: ephemeraCollection,
+  soundscapes: soundscapesCollection,
+  notes: notesCollection,
 };

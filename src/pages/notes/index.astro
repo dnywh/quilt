@@ -1,0 +1,36 @@
+---
+import { getCollection } from "astro:content";
+import Layout from "../../layouts/Layout.astro";
+
+const notes = await getCollection("notes");
+// Sort by date, newest first
+const sortedNotes = notes.sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime()
+);
+---
+
+<Layout title="Notes">
+  <main>
+    <h1>Notes</h1>
+    <ul>
+      {
+        sortedNotes.map((note) => (
+          <li>
+            <a href={`/notes/${note.id}`}>
+              <h2>{note.data.title}</h2>
+              <time datetime={note.data.date.toISOString()}>
+                {note.data.date.toLocaleDateString("en-AU", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </time>
+              {note.data.description && <p>{note.data.description}</p>}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </main>
+</Layout>
+

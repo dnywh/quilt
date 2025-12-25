@@ -15,7 +15,8 @@
     "images": ["optus-cheque"],
     "location": "Coolum Beach, QLD",
     "country": "Australia",
-    "notes": "My huge refund when Optus Sport shut down."
+    "notes": "My huge refund when Optus Sport shut down.",
+    "hasTransparency": true
   },
   {
     "name": "Surf Club Raffle",
