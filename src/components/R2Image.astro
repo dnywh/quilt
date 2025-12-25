@@ -1,0 +1,138 @@
+---
+import { type HTMLAttributes } from "astro/types";
+
+export interface R2ImageProps extends Omit<
+  HTMLAttributes<"img">,
+  "src" | "srcset"
+> {
+  /** Path to the image relative to the R2 bucket root (e.g., 'ephemera/my-image.jpg') */
+  src: string;
+  /** Display width of the image */
+  width: number;
+  /** Display height of the image */
+  height?: number;
+  /** Alt text for the image */
+  alt: string;
+  /** Image fit mode: cover, contain, scale-down, crop, pad */
+  fit?: "cover" | "contain" | "scale-down" | "crop" | "pad";
+  /** Image quality (1-100), defaults to 80 */
+  quality?: number;
+  /** Output format: auto (recommended), avif, webp, or original */
+  format?: "auto" | "avif" | "webp" | "json";
+  /** Device pixel ratio for high-DPI displays */
+  dpr?: number;
+  /** Custom breakpoints for srcset generation */
+  widths?: number[];
+  /** Sizes attribute for responsive images */
+  sizes?: string;
+  /** Loading strategy */
+  loading?: "lazy" | "eager";
+  /** Decoding hint */
+  decoding?: "async" | "sync" | "auto";
+  /** Fetch priority hint */
+  fetchpriority?: "high" | "low" | "auto";
+}
+
+interface Props extends R2ImageProps {}
+
+const R2_BASE_URL = "https://static.dannywhite.net";
+
+const {
+  src,
+  width,
+  height,
+  alt,
+  fit = "cover",
+  quality = 80,
+  format = "auto",
+  dpr,
+  widths,
+  sizes,
+  loading = "lazy",
+  decoding = "async",
+  fetchpriority,
+  class: className,
+  ...rest
+}: Props = Astro.props;
+
+/**
+ * Build a Cloudflare R2 image transformation URL
+ */
+function buildR2Url(
+  path: string,
+  options: {
+    width?: number;
+    height?: number;
+    fit?: string;
+    quality?: number;
+    format?: string;
+    dpr?: number;
+  }
+): string {
+  const transforms: string[] = [];
+
+  if (options.width) transforms.push(`width=${options.width}`);
+  if (options.height) transforms.push(`height=${options.height}`);
+  if (options.fit) transforms.push(`fit=${options.fit}`);
+  if (options.quality) transforms.push(`quality=${options.quality}`);
+  if (options.format) transforms.push(`format=${options.format}`);
+  if (options.dpr) transforms.push(`dpr=${options.dpr}`);
+
+  if (transforms.length === 0) {
+    return `${R2_BASE_URL}/${path}`;
+  }
+
+  return `${R2_BASE_URL}/cdn-cgi/image/${transforms.join(",")}/${path}`;
+}
+
+// Generate the primary src URL
+const primarySrc = buildR2Url(src, {
+  width,
+  height,
+  fit,
+  quality,
+  format,
+  dpr,
+});
+
+// Generate srcset for responsive images
+// Default breakpoints based on common device widths, capped at 2x the display width
+const defaultWidths = [200, 400, 600, 800, 1200, 1600].filter(
+  (w) => w <= width * 2
+);
+const srcsetWidths =
+  widths || (defaultWidths.length > 0 ? defaultWidths : [width]);
+
+const srcset = srcsetWidths
+  .map((w) => {
+    const url = buildR2Url(src, {
+      width: w,
+      height: height ? Math.round(height * (w / width)) : undefined,
+      fit,
+      quality,
+      format,
+    });
+    return `${url} ${w}w`;
+  })
+  .join(", ");
+
+// Default sizes if not provided - assumes image takes up reasonable viewport space
+const defaultSizes = sizes || `(max-width: ${width}px) 100vw, ${width}px`;
+
+// Combine class names
+const imageClassName = className ? `r2-image ${className}` : "r2-image";
+---
+
+<img
+  src={primarySrc}
+  srcset={srcset}
+  sizes={defaultSizes}
+  width={width}
+  height={height}
+  alt={alt}
+  loading={loading}
+  decoding={decoding}
+  fetchpriority={fetchpriority}
+  class={imageClassName}
+  {...rest}
+/>

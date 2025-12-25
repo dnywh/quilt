@@ -2,6 +2,15 @@
 import astroLogo from "../assets/astro.svg";
 import background from "../assets/background.svg";
 import MapViewer from "./MapViewer.astro";
+import LinkList from "./LinkList.astro";
+import { CldImage } from "astro-cloudinary";
+import PeelsPromo from "./PeelsPromo.astro";
+import ReggiePromo from "./ReggiePromo.astro";
+// Classifieds
+import Classifieds from "./Classifieds.astro";
+// Or get the classifieds from the content collection
+import { getCollection } from "astro:content";
+const classifieds = await getCollection("classifieds");
 ---
 
 <div id="container">
@@ -16,10 +25,32 @@ import MapViewer from "./MapViewer.astro";
           alt="Astro Homepage"
         /></a
       >
-      <h1>
-        Hi Danny. To get started, open the <code><pre>src/pages</pre></code> directory
-        in your project.
-      </h1>
+      <h1>Hello. You’ve reached the internet home of Danny White.</h1>
+      <PeelsPromo />
+      <ReggiePromo />
+      <CldImage
+        src="images/artists-cascades"
+        width={400}
+        height={280}
+        alt="A flowing waterfall at Artists Cascades"
+      />
+      <LinkList />
+      <Classifieds />
+
+      <h2>Classifieds manual array</h2>
+      <ul>
+        {
+          classifieds.map((entry: any) => (
+            <li>
+              <p>{entry.data.title}</p>
+              <p>{entry.data.description}</p>
+              <a href={entry.data.url}>{entry.data.url}</a>
+              <p>{entry.data.tags}</p>
+            </li>
+          ))
+        }
+      </ul>
+
       <section id="links">
         <a class="button" href="https://docs.astro.build">Read our docs</a>
         <a href="https://astro.build/chat"

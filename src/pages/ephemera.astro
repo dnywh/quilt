@@ -1,0 +1,61 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Ephemera from "../components/Ephemera.astro";
+import { getCollection } from "astro:content";
+
+// Get total count for the header (all items are visible, hidden ones are in separate file)
+const allItems = await getCollection("ephemera");
+const count = allItems.length;
+---
+
+<Layout>
+  <main class="ephemera-page">
+    <header class="ephemera-header">
+      <h1>Ephemera</h1>
+      <p class="ephemera-description">
+        A collection of {count} tickets, receipts, postcards, and other paper artefacts
+        I've collected over the years.
+      </p>
+    </header>
+
+    <Ephemera />
+  </main>
+</Layout>
+
+<style>
+  .ephemera-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1rem 4rem;
+  }
+
+  .ephemera-header {
+    margin-bottom: 2.5rem;
+    text-align: center;
+  }
+
+  .ephemera-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 0.75rem;
+    letter-spacing: -0.02em;
+  }
+
+  .ephemera-description {
+    font-size: 1.125rem;
+    color: #6b7280;
+    margin: 0;
+  }
+
+  @media (max-width: 640px) {
+    .ephemera-page {
+      padding: 1.5rem 1rem 3rem;
+    }
+
+    .ephemera-header h1 {
+      font-size: 2rem;
+    }
+  }
+</style>
+

@@ -1,0 +1,28 @@
+---
+import { getCollection } from "astro:content";
+
+const classifieds = await getCollection("classifieds");
+---
+
+<section id="classifieds">
+  <h2>Classifieds</h2>
+  <ul>
+    {
+      classifieds.map((entry) => (
+        <li>
+          <a href={entry.data.url} target="_blank" rel="noopener noreferrer">
+            {entry.data.title}
+          </a>
+          {entry.data.description && <p>{entry.data.description}</p>}
+          {entry.data.tags && entry.data.tags.length > 0 && (
+            <div>
+              {entry.data.tags.map((tag) => (
+                <span>{tag}</span>
+              ))}
+            </div>
+          )}
+        </li>
+      ))
+    }
+  </ul>
+</section>
