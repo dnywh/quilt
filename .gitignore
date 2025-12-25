@@ -22,3 +22,6 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# any accidental pnpm lockfile (we use npm)
+pnpm-lock.yaml
