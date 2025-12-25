@@ -2,7 +2,6 @@
 import astroLogo from "../assets/astro.svg";
 import background from "../assets/background.svg";
 import MapViewer from "./MapViewer.astro";
-import LinkList from "./LinkList.astro";
 import { CldImage } from "astro-cloudinary";
 import PeelsPromo from "./PeelsPromo.astro";
 import ReggiePromo from "./ReggiePromo.astro";
@@ -34,7 +33,6 @@ const classifieds = await getCollection("classifieds");
         height={280}
         alt="A flowing waterfall at Artists Cascades"
       />
-      <LinkList />
       <Classifieds />
 
       <h2>Classifieds manual array</h2>
