@@ -91,47 +91,61 @@ function getImageLabel(index: number, total: number): string {
         }
       </header>
 
-      <div class="ephemera-gallery">
-        <figure class="ephemera-hero">
+      <figure
+        class="ephemera-gallery"
+        data-images={JSON.stringify(
+          item.data.images.map((slug: string) =>
+            getEphemeraImagePath(slug, item.data.hasTransparency)
+          )
+        )}
+        data-labels={JSON.stringify(
+          item.data.images.map((_: string, idx: number) =>
+            getImageLabel(idx, item.data.images.length)
+          )
+        )}
+        data-name={item.data.name}
+      >
+        <div class="ephemera-hero-frame">
           <R2Image
-            src={getEphemeraImagePath(item.data.images[0], item.data.hasTransparency)}
+            src={getEphemeraImagePath(
+              item.data.images[0],
+              item.data.hasTransparency
+            )}
             width={1200}
             alt={`${item.data.name} — ${getImageLabel(0, item.data.images.length)}`}
             class="ephemera-hero-image"
             fit="scale-down"
             sizes="(max-width: 640px) 100vw, (max-width: 1200px) 90vw, 1200px"
-            id="hero-image"
-            data-images={JSON.stringify(item.data.images.map((slug: string) => getEphemeraImagePath(slug, item.data.hasTransparency)))}
-            data-labels={JSON.stringify(item.data.images.map((_: string, idx: number) => getImageLabel(idx, item.data.images.length)))}
-            data-name={item.data.name}
           />
-          <figcaption class="ephemera-hero-caption" id="hero-caption">
-            {getImageLabel(0, item.data.images.length)}
-          </figcaption>
-        </figure>
+        </div>
+        <figcaption class="ephemera-hero-caption">
+          {getImageLabel(0, item.data.images.length)}
+        </figcaption>
 
-        {item.data.images.length > 1 && (
-          <div class="ephemera-thumbnails">
-            {item.data.images.map((slug: string, idx: number) => (
-              <button
-                type="button"
-                class={`ephemera-thumb ${idx === 0 ? "active" : ""}`}
-                data-index={idx}
-                aria-label={`View ${getImageLabel(idx, item.data.images.length)}`}
-              >
-                <R2Image
-                  src={getEphemeraImagePath(slug, item.data.hasTransparency)}
-                  width={120}
-                  alt=""
-                  fit="scale-down"
-                  class="ephemera-thumb-image"
-                  sizes="120px"
-                />
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+        {
+          item.data.images.length > 1 && (
+            <div class="ephemera-thumbnails">
+              {item.data.images.map((slug: string, idx: number) => (
+                <button
+                  type="button"
+                  class={`ephemera-thumb ${idx === 0 ? "active" : ""}`}
+                  data-index={idx}
+                  aria-label={`View ${getImageLabel(idx, item.data.images.length)}`}
+                >
+                  <R2Image
+                    src={getEphemeraImagePath(slug, item.data.hasTransparency)}
+                    width={120}
+                    alt=""
+                    fit="scale-down"
+                    class="ephemera-thumb-image"
+                    sizes="120px"
+                  />
+                </button>
+              ))}
+            </div>
+          )
+        }
+      </figure>
 
       {
         item.data.notes && (
@@ -229,20 +243,25 @@ function getImageLabel(index: number, total: number): string {
   .ephemera-gallery {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.75rem;
+    margin: 0;
   }
 
-  .ephemera-hero {
-    margin: 0;
+  .ephemera-hero-frame {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    justify-content: center;
+    min-height: 400px;
+    height: 60vh;
+    max-height: 600px;
+    padding: 1.5rem;
+    background: #f9fafb;
+    border-radius: 12px;
   }
 
   .ephemera-hero-image {
     max-width: 100%;
-    max-height: 70vh;
+    max-height: 100%;
     width: auto;
     height: auto;
     object-fit: scale-down;
@@ -268,7 +287,9 @@ function getImageLabel(index: number, total: number): string {
     border-radius: 6px;
     cursor: pointer;
     overflow: hidden;
-    transition: border-color 0.15s, opacity 0.15s;
+    transition:
+      border-color 0.15s,
+      opacity 0.15s;
     opacity: 0.7;
   }
 
@@ -311,6 +332,13 @@ function getImageLabel(index: number, total: number): string {
       font-size: 1.5rem;
     }
 
+    .ephemera-hero-frame {
+      min-height: 280px;
+      height: 50vh;
+      max-height: 400px;
+      padding: 1rem;
+    }
+
     .ephemera-thumb-image {
       width: 60px;
       height: 45px;
@@ -319,14 +347,15 @@ function getImageLabel(index: number, total: number): string {
 </style>
 
 <script>
-  const heroImg = document.getElementById("hero-image") as HTMLImageElement;
-  const heroCaption = document.getElementById("hero-caption");
+  const gallery = document.querySelector(".ephemera-gallery") as HTMLElement;
+  const heroImg = document.querySelector(".ephemera-hero-image") as HTMLImageElement;
+  const heroCaption = document.querySelector(".ephemera-hero-caption");
   const thumbs = document.querySelectorAll(".ephemera-thumb");
 
-  if (heroImg && thumbs.length > 0) {
-    const images: string[] = JSON.parse(heroImg.dataset.images || "[]");
-    const labels: string[] = JSON.parse(heroImg.dataset.labels || "[]");
-    const name = heroImg.dataset.name || "";
+  if (gallery && heroImg && thumbs.length > 0) {
+    const images: string[] = JSON.parse(gallery.dataset.images || "[]");
+    const labels: string[] = JSON.parse(gallery.dataset.labels || "[]");
+    const name = gallery.dataset.name || "";
 
     thumbs.forEach((thumb) => {
       thumb.addEventListener("click", () => {
