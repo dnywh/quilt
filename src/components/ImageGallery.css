@@ -1,0 +1,75 @@
+.ephemera-hero-frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  height: 60vh;
+  max-height: 600px;
+  padding: 1.5rem;
+  background: #f9fafb;
+  border-radius: 12px;
+}
+
+.ephemera-hero-image {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: scale-down;
+}
+
+.ephemera-hero-caption {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.ephemera-thumbnails {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.ephemera-thumb {
+  padding: 0;
+  border: 2px solid transparent;
+  background: #f3f4f6;
+  border-radius: 6px;
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    border-color 0.15s,
+    opacity 0.15s;
+  opacity: 0.7;
+}
+
+.ephemera-thumb:hover {
+  opacity: 1;
+}
+
+.ephemera-thumb.active {
+  border-color: #111827;
+  opacity: 1;
+}
+
+.ephemera-thumb-image {
+  display: block;
+  width: 80px;
+  height: 60px;
+  object-fit: contain;
+}
+
+@media (max-width: 640px) {
+  .ephemera-hero-frame {
+    min-height: 280px;
+    height: 50vh;
+    max-height: 400px;
+    padding: 1rem;
+  }
+
+  .ephemera-thumb-image {
+    width: 60px;
+    height: 45px;
+  }
+}

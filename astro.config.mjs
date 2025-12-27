@@ -1,11 +1,12 @@
 // @ts-check
 import { defineConfig, envField } from "astro/config";
 import mdx from "@astrojs/mdx";
+import preact from "@astrojs/preact";
 
 // https://astro.build/config
 export default defineConfig({
   site: "https://quilt.dannywhite.net",
-  integrations: [mdx()],
+  integrations: [mdx(), preact()],
   env: {
     schema: {
       PUBLIC_MAPTILER_API_KEY: envField.string({
