@@ -8,6 +8,7 @@ import EphemeraTiles from "./EphemeraTiles.astro";
 import Trove from "./Trove.astro";
 import SoundscapePlayer from "./SoundscapePlayer.astro";
 import { getCollection } from "astro:content";
+import R2Image from "./R2Image.astro";
 
 const trove = await getCollection("trove");
 const notes = await getCollection("notes");
@@ -29,6 +30,15 @@ const notes = await getCollection("notes");
     <section id="promos">
       <PeelsPromo />
       <ReggiePromo />
+    </section>
+
+    <section>
+      <R2Image
+        src="img/waratah-mosaic.jpg"
+        width={200}
+        height={200}
+        alt="A mosaic that looks like a waratah"
+      />
     </section>
 
     <section>

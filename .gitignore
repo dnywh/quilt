@@ -23,5 +23,12 @@ pnpm-debug.log*
 # jetbrains setting folder
 .idea/
 
+# ------------------------------------------------------------
+# Custom additions
+
 # any accidental pnpm lockfile (we use npm)
 pnpm-lock.yaml
+
+# R2 static bucket mirror folder
+static/
+
