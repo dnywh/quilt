@@ -1,17 +1,18 @@
 ---
-import Layout from "../../layouts/Layout.astro";
+import Layout from "../../layouts/BaseLayout.astro";
 import EphemeraTiles from "../../components/EphemeraTiles.astro";
 import { getCollection } from "astro:content";
 
 // Get total count for the header (all items are visible, hidden ones are in separate file)
 const allItems = await getCollection("ephemera");
 const count = allItems.length;
+const pageTitle = "Ephemera";
 ---
 
-<Layout>
+<Layout title={pageTitle}>
   <main class="ephemera-page">
     <header class="ephemera-header">
-      <h1>Ephemera</h1>
+      <h1>{pageTitle}</h1>
       <p class="ephemera-description">
         A collection of {count} tickets, receipts, postcards, and other paper artefacts
         I've collected over the years.

@@ -1,7 +1,8 @@
 ---
 import { getCollection } from "astro:content";
-import Layout from "../../layouts/Layout.astro";
+import Layout from "../../layouts/BaseLayout.astro";
 
+const pageTitle = "Notes";
 const notes = await getCollection("notes");
 // Sort by date, newest first
 const sortedNotes = notes.sort(
@@ -9,7 +10,7 @@ const sortedNotes = notes.sort(
 );
 ---
 
-<Layout title="Notes">
+<Layout title={pageTitle}>
   <main>
     <h1>Notes</h1>
     <ul>
@@ -33,4 +34,3 @@ const sortedNotes = notes.sort(
     </ul>
   </main>
 </Layout>
-

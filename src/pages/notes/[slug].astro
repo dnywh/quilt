@@ -1,8 +1,8 @@
 ---
 import { getCollection, render } from "astro:content";
-import Layout from "../../layouts/Layout.astro";
+import Layout from "../../layouts/BaseLayout.astro";
 import MapViewer from "../../components/MapViewer.astro";
-
+import SoundscapePlayer from "../../components/SoundscapePlayer.astro";
 export async function getStaticPaths() {
   const notes = await getCollection("notes");
   return notes.map((note) => ({
@@ -13,12 +13,13 @@ export async function getStaticPaths() {
 
 const { note } = Astro.props;
 const { Content } = await render(note);
+const pageTitle = note.data.title;
 ---
 
-<Layout title={note.data.title}>
+<Layout title={`${pageTitle} — Notes`}>
   <article>
     <header>
-      <h1>{note.data.title}</h1>
+      <h1>{pageTitle}</h1>
       <time datetime={note.data.date.toISOString()}>
         {
           note.data.date.toLocaleDateString("en-AU", {
@@ -39,6 +40,7 @@ const { Content } = await render(note);
       )
     }
 
-    <Content />
+    <!-- Render the content with these custom components available inline within the note without imports -->
+    <Content components={{ MapViewer, SoundscapePlayer }} />
   </article>
 </Layout>
