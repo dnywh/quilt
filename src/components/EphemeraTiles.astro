@@ -1,6 +1,7 @@
 ---
 import { getCollection, getEntry } from "astro:content";
 import R2Image from "./R2Image.astro";
+import { getEphemeraImagePath } from "../lib/ephemera";
 
 interface Props {
   /** Limit to the latest N items (sorted by date descending). No pagination when set. */
@@ -44,11 +45,6 @@ function formatDate(date: Date) {
   });
 }
 
-// Helper to build R2 image path
-function r2ImagePath(slug: string) {
-  return `ephemera/${slug}.jpg`;
-}
-
 ---
 
 {
@@ -67,7 +63,7 @@ function r2ImagePath(slug: string) {
           <a href={`/ephemera/${item.id}`} class="ephemera-link">
             
               <R2Image
-                src={r2ImagePath(item.data.images[0])}
+                src={getEphemeraImagePath(item.data.images[0], item.data.hasTransparency)}
                 width={400}
                 height={300}
                 alt={item.data.name}

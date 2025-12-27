@@ -68,17 +68,24 @@ const soundscapesCollection = defineCollection({
 // First image is the ID, second is back (2 images) or inside (3 images), third is back
 const ephemeraCollection = defineCollection({
   loader: async () => {
-    return (ephemeraData as Array<Record<string, unknown>>).map((entry) => ({
-      id: (entry.images as string[])[0], // Derive ID from first image
-      name: entry.name as string,
-      date: entry.date as string,
-      venue: entry.venue as string | undefined,
-      location: entry.location as string | undefined,
-      country: entry.country as string | undefined,
-      tags: entry.tags as string[],
-      images: entry.images as string[],
-      notes: entry.notes as string | undefined,
-    }));
+    return (ephemeraData as Array<Record<string, unknown>>).map((entry) => {
+      const firstImage = (entry.images as string[])[0];
+      // Strip file extension from ID to keep URLs clean (e.g., "image.webp" -> "image")
+      const id = firstImage.replace(/\.(jpe?g|png|webp|gif)$/i, "");
+
+      return {
+        id,
+        name: entry.name as string,
+        date: entry.date as string,
+        venue: entry.venue as string | undefined,
+        location: entry.location as string | undefined,
+        country: entry.country as string | undefined,
+        tags: entry.tags as string[],
+        images: entry.images as string[],
+        notes: entry.notes as string | undefined,
+        hasTransparency: entry.hasTransparency as boolean | undefined,
+      };
+    });
   },
   schema: z.object({
     name: z.string(),
@@ -89,6 +96,7 @@ const ephemeraCollection = defineCollection({
     tags: z.array(z.string()),
     images: z.array(z.string()).min(1), // At least one image required
     notes: z.string().optional(),
+    hasTransparency: z.boolean().optional(), // If true, images use .webp extension
   }),
 });
 

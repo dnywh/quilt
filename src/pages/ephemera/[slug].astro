@@ -2,6 +2,7 @@
 import Layout from "../../layouts/BaseLayout.astro";
 import R2Image from "../../components/R2Image.astro";
 import { getCollection } from "astro:content";
+import { getEphemeraImagePath } from "../../lib/ephemera";
 
 export async function getStaticPaths() {
   const ephemeraItems = await getCollection("ephemera");
@@ -21,11 +22,6 @@ function formatDate(date: Date) {
     month: "long",
     day: "numeric",
   });
-}
-
-// Helper to build R2 image path
-function r2ImagePath(slug: string) {
-  return `ephemera/${slug}.jpg`;
 }
 
 // Helper to get image label based on position
@@ -95,26 +91,46 @@ function getImageLabel(index: number, total: number): string {
         }
       </header>
 
-      <div class="ephemera-images">
-        {
-          item.data.images.map((slug: string, idx: number) => (
-            <figure class="ephemera-figure">
-              <R2Image
-                src={r2ImagePath(slug)}
-                width={800}
-                height={600}
-                alt={`${item.data.name} — ${getImageLabel(idx, item.data.images.length)}`}
-                class="ephemera-image"
-                sizes="(max-width: 640px) 100vw, (max-width: 900px) 80vw, 700px"
-              />
-              {item.data.images.length > 1 && (
-                <figcaption class="ephemera-caption">
-                  {getImageLabel(idx, item.data.images.length)}
-                </figcaption>
-              )}
-            </figure>
-          ))
-        }
+      <div class="ephemera-gallery">
+        <figure class="ephemera-hero">
+          <R2Image
+            src={getEphemeraImagePath(item.data.images[0], item.data.hasTransparency)}
+            width={1200}
+            alt={`${item.data.name} — ${getImageLabel(0, item.data.images.length)}`}
+            class="ephemera-hero-image"
+            fit="scale-down"
+            sizes="(max-width: 640px) 100vw, (max-width: 1200px) 90vw, 1200px"
+            id="hero-image"
+            data-images={JSON.stringify(item.data.images.map((slug: string) => getEphemeraImagePath(slug, item.data.hasTransparency)))}
+            data-labels={JSON.stringify(item.data.images.map((_: string, idx: number) => getImageLabel(idx, item.data.images.length)))}
+            data-name={item.data.name}
+          />
+          <figcaption class="ephemera-hero-caption" id="hero-caption">
+            {getImageLabel(0, item.data.images.length)}
+          </figcaption>
+        </figure>
+
+        {item.data.images.length > 1 && (
+          <div class="ephemera-thumbnails">
+            {item.data.images.map((slug: string, idx: number) => (
+              <button
+                type="button"
+                class={`ephemera-thumb ${idx === 0 ? "active" : ""}`}
+                data-index={idx}
+                aria-label={`View ${getImageLabel(idx, item.data.images.length)}`}
+              >
+                <R2Image
+                  src={getEphemeraImagePath(slug, item.data.hasTransparency)}
+                  width={120}
+                  alt=""
+                  fit="scale-down"
+                  class="ephemera-thumb-image"
+                  sizes="120px"
+                />
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {
@@ -210,30 +226,66 @@ function getImageLabel(index: number, total: number): string {
     border-radius: 9999px;
   }
 
-  .ephemera-images {
+  .ephemera-gallery {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1rem;
   }
 
-  .ephemera-figure {
+  .ephemera-hero {
     margin: 0;
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 0.5rem;
   }
 
-  .ephemera-image {
-    width: 100%;
+  .ephemera-hero-image {
+    max-width: 100%;
+    max-height: 70vh;
+    width: auto;
     height: auto;
-    border-radius: 12px;
-    background: #f9fafb;
+    object-fit: scale-down;
   }
 
-  .ephemera-caption {
+  .ephemera-hero-caption {
     font-size: 0.875rem;
     color: #9ca3af;
     text-align: center;
+  }
+
+  .ephemera-thumbnails {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+  }
+
+  .ephemera-thumb {
+    padding: 0;
+    border: 2px solid transparent;
+    background: #f3f4f6;
+    border-radius: 6px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: border-color 0.15s, opacity 0.15s;
+    opacity: 0.7;
+  }
+
+  .ephemera-thumb:hover {
+    opacity: 1;
+  }
+
+  .ephemera-thumb.active {
+    border-color: #111827;
+    opacity: 1;
+  }
+
+  .ephemera-thumb-image {
+    display: block;
+    width: 80px;
+    height: 60px;
+    object-fit: contain;
   }
 
   .ephemera-notes {
@@ -258,5 +310,50 @@ function getImageLabel(index: number, total: number): string {
     .ephemera-name {
       font-size: 1.5rem;
     }
+
+    .ephemera-thumb-image {
+      width: 60px;
+      height: 45px;
+    }
   }
 </style>
+
+<script>
+  const heroImg = document.getElementById("hero-image") as HTMLImageElement;
+  const heroCaption = document.getElementById("hero-caption");
+  const thumbs = document.querySelectorAll(".ephemera-thumb");
+
+  if (heroImg && thumbs.length > 0) {
+    const images: string[] = JSON.parse(heroImg.dataset.images || "[]");
+    const labels: string[] = JSON.parse(heroImg.dataset.labels || "[]");
+    const name = heroImg.dataset.name || "";
+
+    thumbs.forEach((thumb) => {
+      thumb.addEventListener("click", () => {
+        const index = parseInt((thumb as HTMLElement).dataset.index || "0", 10);
+        const newSrc = images[index];
+        const newLabel = labels[index];
+
+        // Update hero image src and srcset
+        const baseUrl = heroImg.src.split("/cdn-cgi/")[0];
+        const buildUrl = (path: string, width: number) =>
+          `${baseUrl}/cdn-cgi/image/width=${width},fit=scale-down,quality=80,format=auto/${path}`;
+
+        heroImg.src = buildUrl(newSrc, 1200);
+        heroImg.srcset = [200, 400, 600, 800, 1200, 1600]
+          .map((w) => `${buildUrl(newSrc, w)} ${w}w`)
+          .join(", ");
+        heroImg.alt = `${name} — ${newLabel}`;
+
+        // Update caption
+        if (heroCaption) {
+          heroCaption.textContent = newLabel;
+        }
+
+        // Update active state
+        thumbs.forEach((t) => t.classList.remove("active"));
+        thumb.classList.add("active");
+      });
+    });
+  }
+</script>

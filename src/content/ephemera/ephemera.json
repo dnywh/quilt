@@ -1,5 +1,50 @@
 [
   {
+    "name": "Happy Birthday Danny",
+    "date": "2025-11-23",
+    "tags": ["card", "note", "handwritten", "birthday"],
+    "images": ["josh-birthday-card-envelope.webp"],
+    "location": "Dunkeld, VIC",
+    "country": "Australia"
+  },
+  {
+    "name": "Good Days Hot Bread",
+    "date": "2025-11-19",
+    "tags": ["receipt", "food"],
+    "images": ["good-days-hot-bread-8173.webp"],
+    "hasTransparency": true,
+    "venue": "Good Days Hot Bread",
+    "location": "Brunswick, VIC",
+    "country": "Australia"
+  },
+  {
+    "name": "Turn-O-Matic",
+    "date": "2025-11-09",
+    "tags": ["ticket", "receipt"],
+    "images": ["turnomatic-saccas.webp", "turnomatic-saccas-back.webp"],
+    "hasTransparency": true,
+    "location": "Coburg, VIC",
+    "country": "Australia"
+  },
+  {
+    "name": "Marathon Bib",
+    "date": "2025-11-01",
+    "tags": ["marathon", "bib", "race"],
+    "images": ["marathon-bib-front.webp", "marathon-bib-back.webp"],
+    "hasTransparency": true,
+    "location": "Huskisson, NSW",
+    "country": "Australia"
+  },
+  {
+    "name": "Celebrity Heads",
+    "date": "2025-09-27",
+    "tags": ["game", "handwritten"],
+    "images": ["celebrity-heads-santa.webp"],
+    "location": "Coolum Beach, QLD",
+    "country": "Australia",
+    "notes": "With Ralph, Maddie, AC, Sylvia."
+  },
+  {
     "name": "Celebrity Heads",
     "date": "2025-09-27",
     "tags": ["game", "handwritten"],
@@ -12,11 +57,11 @@
     "name": "Phat Stacks",
     "date": "2025-09-01",
     "tags": ["receipt", "refund", "cheque"],
-    "images": ["optus-cheque"],
+    "images": ["optus-cheque.jpg"],
+    "hasTransparency": true,
     "location": "Coolum Beach, QLD",
     "country": "Australia",
-    "notes": "My huge refund when Optus Sport shut down.",
-    "hasTransparency": true
+    "notes": "My huge refund when Optus Sport shut down."
   },
   {
     "name": "Surf Club Raffle",
