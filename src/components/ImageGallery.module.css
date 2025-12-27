@@ -1,3 +1,5 @@
+/*  */
+/* Used in TSX like class={styles["ephemera-hero-frame"]}  */
 .ephemera-hero-frame {
   display: flex;
   align-items: center;
@@ -10,7 +12,9 @@
   border-radius: 12px;
 }
 
-.ephemera-hero-image {
+/* camelCase */
+/* Used in TSX like class={styles.heroCaption}  */
+.heroImage {
   max-width: 100%;
   max-height: 100%;
   width: auto;
@@ -18,42 +22,40 @@
   object-fit: scale-down;
 }
 
-.ephemera-hero-caption {
+.heroCaption {
   font-size: 0.875rem;
   color: #9ca3af;
   text-align: center;
 }
 
-.ephemera-thumbnails {
+.thumbnails {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
   justify-content: center;
 }
 
-.ephemera-thumb {
+.thumb {
   padding: 0;
   border: 2px solid transparent;
   background: #f3f4f6;
   border-radius: 6px;
   cursor: pointer;
   overflow: hidden;
-  transition:
-    border-color 0.15s,
-    opacity 0.15s;
+  transition: border-color 0.15s, opacity 0.15s;
   opacity: 0.7;
 }
 
-.ephemera-thumb:hover {
+.thumb:hover {
   opacity: 1;
 }
 
-.ephemera-thumb.active {
+.thumb.active {
   border-color: #111827;
   opacity: 1;
 }
 
-.ephemera-thumb-image {
+.thumbImage {
   display: block;
   width: 80px;
   height: 60px;
@@ -61,14 +63,14 @@
 }
 
 @media (max-width: 640px) {
-  .ephemera-hero-frame {
+  .heroFrame {
     min-height: 280px;
     height: 50vh;
     max-height: 400px;
     padding: 1rem;
   }
 
-  .ephemera-thumb-image {
+  .thumbImage {
     width: 60px;
     height: 45px;
   }
