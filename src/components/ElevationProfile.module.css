@@ -3,10 +3,102 @@
   margin-top: 12px;
 }
 
-.chart {
-  width: 100%;
-  height: 100px;
+.chartWrapper {
+  position: relative;
+  padding-left: 36px;
+  padding-bottom: 18px;
+}
+
+.chartArea {
+  position: relative;
+  height: 80px;
   cursor: crosshair;
+}
+
+.chart {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Y-axis labels */
+.yAxisMax,
+.yAxisMin {
+  position: absolute;
+  left: 0;
+  font-size: 11px;
+  color: #666;
+  width: 32px;
+  text-align: right;
+}
+
+.yAxisMax {
+  top: 0;
+}
+
+.yAxisMin {
+  top: 68px;
+}
+
+/* X-axis labels */
+.xAxisStart,
+.xAxisEnd {
+  position: absolute;
+  bottom: 0;
+  font-size: 11px;
+  color: #666;
+}
+
+.xAxisStart {
+  left: 36px;
+}
+
+.xAxisEnd {
+  right: 0;
+}
+
+/* Hover indicator */
+.hoverLine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #666;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.hoverDot {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  background: #ff0000;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.hoverEle,
+.hoverDist {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: #333;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 1px 4px;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+
+.hoverEle {
+  bottom: calc(100% + 4px);
+}
+
+.hoverDist {
+  top: calc(100% + 4px);
 }
 
 .stats {
@@ -15,4 +107,5 @@
   font-size: 12px;
   color: #666;
   margin-top: 4px;
+  padding-left: 36px;
 }

@@ -5,9 +5,10 @@ interface Props {
   gpxUrl?: string;
   center?: [number, number];
   zoom?: number;
+  showElevationProfile?: boolean;
 }
 
-const { gpxUrl, center = [-122.4194, 37.7749], zoom = 13 } = Astro.props;
+const { gpxUrl, center = [-122.4194, 37.7749], zoom = 13, showElevationProfile = true } = Astro.props;
 // Generate a unique ID for this MapViewer instance
 const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
 ---
@@ -20,7 +21,7 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
     data-zoom={zoom}
   >
   </div>
-  {gpxUrl && (
+  {gpxUrl && showElevationProfile && (
     <ElevationProfile gpxUrl={gpxUrl} mapContainerId={mapId} client:load />
   )}
   <figcaption>

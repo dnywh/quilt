@@ -19,7 +19,7 @@ function haversineDistance(
   lat2: number,
   lon2: number
 ): number {
-  const R = 6371000; // Earth's radius in meters
+  const R = 6371000;
   const phi1 = (lat1 * Math.PI) / 180;
   const phi2 = (lat2 * Math.PI) / 180;
   const deltaPhi = ((lat2 - lat1) * Math.PI) / 180;
@@ -39,7 +39,7 @@ function haversineDistance(
 export default function ElevationProfile({ gpxUrl, mapContainerId }: Props) {
   const [points, setPoints] = useState<ElevationPoint[]>([]);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
-  const svgRef = useRef<SVGSVGElement>(null);
+  const chartRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function loadGpx() {
@@ -104,43 +104,30 @@ export default function ElevationProfile({ gpxUrl, mapContainerId }: Props) {
   const eleRange = maxEle - minEle || 1;
   const totalDistance = points[points.length - 1].distance;
 
-  // Calculate total elevation gain
   let elevationGain = 0;
   for (let i = 1; i < points.length; i++) {
     const diff = points[i].ele - points[i - 1].ele;
     if (diff > 0) elevationGain += diff;
   }
 
-  const padding = { top: 10, right: 10, bottom: 20, left: 40 };
-  const width = 600;
-  const height = 100;
-  const chartWidth = width - padding.left - padding.right;
-  const chartHeight = height - padding.top - padding.bottom;
+  // SVG path uses full viewBox (no padding - padding handled by CSS)
+  const viewBoxWidth = 100;
+  const viewBoxHeight = 100;
 
   const pathD = points
     .map((p, i) => {
-      const x = padding.left + (p.distance / totalDistance) * chartWidth;
-      const y =
-        padding.top + chartHeight - ((p.ele - minEle) / eleRange) * chartHeight;
+      const x = (p.distance / totalDistance) * viewBoxWidth;
+      const y = viewBoxHeight - ((p.ele - minEle) / eleRange) * viewBoxHeight;
       return `${i === 0 ? "M" : "L"} ${x} ${y}`;
     })
     .join(" ");
 
-  const areaD =
-    pathD +
-    ` L ${padding.left + chartWidth} ${padding.top + chartHeight} L ${padding.left} ${padding.top + chartHeight} Z`;
+  const areaD = `${pathD} L ${viewBoxWidth} ${viewBoxHeight} L 0 ${viewBoxHeight} Z`;
 
   const handleMouseMove = (e: MouseEvent) => {
-    if (!svgRef.current) return;
-    const rect = svgRef.current.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-
-    // Convert from rendered pixels to viewBox coordinates
-    const scaleX = width / rect.width;
-    const viewBoxX = mouseX * scaleX;
-
-    // Calculate relative position within the chart area (0-1)
-    const relX = (viewBoxX - padding.left) / chartWidth;
+    if (!chartRef.current) return;
+    const rect = chartRef.current.getBoundingClientRect();
+    const relX = (e.clientX - rect.left) / rect.width;
 
     if (relX < 0 || relX > 1) {
       setHoverIndex(null);
@@ -164,97 +151,51 @@ export default function ElevationProfile({ gpxUrl, mapContainerId }: Props) {
     setHoverIndex(null);
   };
 
-  const hoverX =
+  const hoverPercent =
+    hoverIndex !== null ? (points[hoverIndex].distance / totalDistance) * 100 : 0;
+  const hoverYPercent =
     hoverIndex !== null
-      ? padding.left + (points[hoverIndex].distance / totalDistance) * chartWidth
-      : 0;
-  const hoverY =
-    hoverIndex !== null
-      ? padding.top +
-        chartHeight -
-        ((points[hoverIndex].ele - minEle) / eleRange) * chartHeight
+      ? (1 - (points[hoverIndex].ele - minEle) / eleRange) * 100
       : 0;
 
   return (
     <div class={styles.container}>
-      <svg
-        ref={svgRef}
-        class={styles.chart}
-        viewBox={`0 0 ${width} ${height}`}
-        preserveAspectRatio="none"
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-      >
-        {/* Filled area */}
-        <path d={areaD} fill="rgba(255, 0, 0, 0.15)" />
-        {/* Line */}
-        <path d={pathD} fill="none" stroke="#ff0000" stroke-width="2" />
+      <div class={styles.chartWrapper}>
+        <span class={styles.yAxisMax}>{Math.round(maxEle)}m</span>
+        <span class={styles.yAxisMin}>{Math.round(minEle)}m</span>
 
-        {/* Y-axis labels */}
-        <text
-          x={padding.left - 4}
-          y={padding.top + 4}
-          text-anchor="end"
-          font-size="10"
-          fill="#666"
+        <div
+          ref={chartRef}
+          class={styles.chartArea}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
         >
-          {Math.round(maxEle)}m
-        </text>
-        <text
-          x={padding.left - 4}
-          y={padding.top + chartHeight}
-          text-anchor="end"
-          font-size="10"
-          fill="#666"
-        >
-          {Math.round(minEle)}m
-        </text>
+          <svg
+            class={styles.chart}
+            viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`}
+            preserveAspectRatio="none"
+          >
+            <path d={areaD} fill="rgba(255, 0, 0, 0.15)" />
+            <path d={pathD} fill="none" stroke="#ff0000" stroke-width="2" vector-effect="non-scaling-stroke" />
+          </svg>
 
-        {/* X-axis labels */}
-        <text
-          x={padding.left}
-          y={height - 4}
-          text-anchor="start"
-          font-size="10"
-          fill="#666"
-        >
-          0
-        </text>
-        <text
-          x={padding.left + chartWidth}
-          y={height - 4}
-          text-anchor="end"
-          font-size="10"
-          fill="#666"
-        >
-          {(totalDistance / 1000).toFixed(1)}km
-        </text>
+          {hoverIndex !== null && (
+            <div class={styles.hoverLine} style={{ left: `${hoverPercent}%` }}>
+              <span class={styles.hoverDot} style={{ top: `${hoverYPercent}%` }} />
+              <span class={styles.hoverEle}>
+                {Math.round(points[hoverIndex].ele)}m
+              </span>
+              <span class={styles.hoverDist}>
+                {(points[hoverIndex].distance / 1000).toFixed(1)}km
+              </span>
+            </div>
+          )}
+        </div>
 
-        {/* Hover indicator */}
-        {hoverIndex !== null && (
-          <>
-            <line
-              x1={hoverX}
-              y1={padding.top}
-              x2={hoverX}
-              y2={padding.top + chartHeight}
-              stroke="#666"
-              stroke-width="1"
-              stroke-dasharray="3,3"
-            />
-            <circle cx={hoverX} cy={hoverY} r="4" fill="#ff0000" />
-            <text
-              x={hoverX}
-              y={padding.top - 2}
-              text-anchor="middle"
-              font-size="10"
-              fill="#333"
-            >
-              {Math.round(points[hoverIndex].ele)}m
-            </text>
-          </>
-        )}
-      </svg>
+        <span class={styles.xAxisStart}>0</span>
+        <span class={styles.xAxisEnd}>{(totalDistance / 1000).toFixed(1)}km</span>
+      </div>
+
       <div class={styles.stats}>
         <span>Distance: {(totalDistance / 1000).toFixed(2)} km</span>
         <span>Elevation gain: {Math.round(elevationGain)} m</span>
