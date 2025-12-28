@@ -1,4 +1,6 @@
 ---
+import ElevationProfile from "./ElevationProfile.tsx";
+
 interface Props {
   gpxUrl?: string;
   center?: [number, number];
@@ -18,7 +20,15 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
     data-zoom={zoom}
   >
   </div>
+  {gpxUrl && (
+    <ElevationProfile gpxUrl={gpxUrl} mapContainerId={mapId} client:load />
+  )}
   <figcaption>
+    {gpxUrl && (
+      <>
+        <a href={gpxUrl} download>Download GPX</a> ·{" "}
+      </>
+    )}
     Map data <a href="https://www.openstreetmap.org/copyright"
       >© OpenStreetMap contributors</a
     >. Tiles by <a href="https://www.maptiler.com/">MapTiler</a>. Rendered with <a
@@ -163,6 +173,30 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
           touchZoomRotate: false,
           attributionControl: false,
         });
+
+        // Create a marker for elevation profile hover (hidden initially)
+        let hoverMarker: maplibregl.Marker | null = null;
+
+        // Listen for elevation hover events
+        mapContainer.addEventListener("elevation-hover", ((
+          e: CustomEvent<{ lon: number; lat: number } | null>
+        ) => {
+          if (e.detail) {
+            if (!hoverMarker) {
+              const el = document.createElement("div");
+              el.style.width = "12px";
+              el.style.height = "12px";
+              el.style.backgroundColor = "#ff0000";
+              el.style.borderRadius = "50%";
+              el.style.border = "2px solid white";
+              el.style.boxShadow = "0 1px 3px rgba(0,0,0,0.3)";
+              hoverMarker = new maplibregl.Marker({ element: el });
+            }
+            hoverMarker.setLngLat([e.detail.lon, e.detail.lat]).addTo(map);
+          } else if (hoverMarker) {
+            hoverMarker.remove();
+          }
+        }) as EventListener);
 
         // If we have GPX track points, add them to the map
         if (gpxUrl && trackSegments.length > 0) {
