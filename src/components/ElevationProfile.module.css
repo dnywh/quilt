@@ -1,3 +1,15 @@
+/*
+ * Elevation Profile Chart Layout
+ *
+ * The chart uses a CSS custom property --elevation-ratio (set via JS) to position elements.
+ * This ratio = viewBoxHeight / viewBoxExtended (e.g., 100/125 = 0.8 = 80%)
+ *
+ * - The top 80% of the chart area contains the actual elevation data
+ * - The bottom 20% is the "lie" where the fill extends to cover axis text
+ * - yAxisMin and xAxisEnd are positioned at the 80% mark (the elevation floor)
+ * - hoverLine only spans the top 80% (the data area)
+ */
+
 .container {
   width: 100%;
   margin: 2rem 0;
@@ -15,7 +27,10 @@
   height: 100%;
 }
 
-/* Y-axis labels - full width with borders as grid lines */
+/*
+ * Axis labels
+ * Padding matches hoverEle/hoverDist for vertical text alignment
+ */
 .yAxisMax,
 .yAxisMin {
   position: absolute;
@@ -24,35 +39,39 @@
   font-size: 11px;
   line-height: 1;
   color: #666;
+  padding: 2px 2.5px;
 }
 
 .yAxisMax {
   top: 0;
   transform: translateY(-100%);
-  border-bottom: 1px solid rgba(255, 0, 0, 0.2);
+  border-bottom: 1px dashed rgba(255, 0, 0, 0.2);
 }
 
-/* Position at 83.33% (100/120 of viewBox) where the elevation floor sits */
+/* Positioned at elevation-ratio (80%) - where the elevation floor sits */
 .yAxisMin {
-  top: 83.33%;
-  border-top: 1px solid rgba(255, 0, 0, 0.2);
+  top: calc(var(--elevation-ratio) * 100%);
+  border-top: 1px dashed rgba(255, 0, 0, 0.2);
 }
 
-/* X-axis label - aligned with yAxisMin */
 .xAxisEnd {
   position: absolute;
-  top: 83.33%;
+  top: calc(var(--elevation-ratio) * 100%);
   right: 0;
   font-size: 11px;
   line-height: 1;
   color: #666;
+  padding: 2px 2.5px;
 }
 
-/* Hover indicator - only spans the elevation data area */
+/*
+ * Hover indicator
+ * Height limited to the elevation data area (elevation-ratio)
+ */
 .hoverLine {
   position: absolute;
   top: 0;
-  height: 83.33%;
+  height: calc(var(--elevation-ratio) * 100%);
   width: 1px;
   background: #666;
   pointer-events: none;
@@ -71,26 +90,32 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
+/*
+ * Hover labels
+ * Positioned relative to chartArea (not hoverLine) with clamped left values
+ * Padding matches yAxisMax/yAxisMin for vertical text alignment
+ */
 .hoverEle,
 .hoverDist {
   position: absolute;
-  left: 50%;
   transform: translateX(-50%);
   font-size: 11px;
   line-height: 1;
   background: red;
   color: white;
-  padding: 2px 1.5px;
+  padding: 2px 2.5px;
   border-radius: 2px;
   white-space: nowrap;
+  pointer-events: none;
 }
 
 .hoverEle {
-  bottom: calc(100% + 4px);
+  top: 0;
+  transform: translate(-50%, -100%);
 }
 
 .hoverDist {
-  top: calc(100% + 4px);
+  top: calc(var(--elevation-ratio) * 100%);
 }
 
 .stats {

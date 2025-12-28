@@ -36,6 +36,25 @@ function haversineDistance(
   return R * c;
 }
 
+/*
+ * Layout constants - these define the chart geometry.
+ * The SVG viewBox uses these values, and CSS custom properties mirror them.
+ *
+ * viewBoxHeight (100) = the elevation data area
+ * viewBoxExtension (25) = extra space below for the "lie" that covers axis text
+ * viewBoxExtended (125) = total viewBox height
+ *
+ * The ratio viewBoxHeight/viewBoxExtended (80%) determines where:
+ * - The elevation floor line sits (yAxisMin border-top)
+ * - The hover line ends
+ * - The xAxisEnd label aligns
+ */
+const VIEW_BOX_WIDTH = 100;
+const VIEW_BOX_HEIGHT = 100; // Elevation data area
+const VIEW_BOX_EXTENSION = 25; // Extra space below for text coverage
+const VIEW_BOX_EXTENDED = VIEW_BOX_HEIGHT + VIEW_BOX_EXTENSION; // 125
+const ELEVATION_RATIO = VIEW_BOX_HEIGHT / VIEW_BOX_EXTENDED; // 0.8 (80%)
+
 export default function ElevationProfile({ gpxUrl, mapContainerId }: Props) {
   const [points, setPoints] = useState<ElevationPoint[]>([]);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
@@ -110,21 +129,17 @@ export default function ElevationProfile({ gpxUrl, mapContainerId }: Props) {
     if (diff > 0) elevationGain += diff;
   }
 
-  // SVG viewBox: line uses 0-100 for elevation, extra 20 at bottom for text coverage
-  const viewBoxWidth = 100;
-  const viewBoxHeight = 100;
-  const viewBoxExtended = 120; // Extra space below for the "lie"
-
   const pathD = points
     .map((p, i) => {
-      const x = (p.distance / totalDistance) * viewBoxWidth;
-      const y = viewBoxHeight - ((p.ele - minEle) / eleRange) * viewBoxHeight;
+      const x = (p.distance / totalDistance) * VIEW_BOX_WIDTH;
+      const y =
+        VIEW_BOX_HEIGHT - ((p.ele - minEle) / eleRange) * VIEW_BOX_HEIGHT;
       return `${i === 0 ? "M" : "L"} ${x} ${y}`;
     })
     .join(" ");
 
   // Area fill extends to the bottom of the extended viewBox
-  const areaD = `${pathD} L ${viewBoxWidth} ${viewBoxExtended} L 0 ${viewBoxExtended} Z`;
+  const areaD = `${pathD} L ${VIEW_BOX_WIDTH} ${VIEW_BOX_EXTENDED} L 0 ${VIEW_BOX_EXTENDED} Z`;
 
   const handleMouseMove = (e: MouseEvent) => {
     if (!chartRef.current) return;
@@ -154,43 +169,68 @@ export default function ElevationProfile({ gpxUrl, mapContainerId }: Props) {
   };
 
   const hoverPercent =
-    hoverIndex !== null ? (points[hoverIndex].distance / totalDistance) * 100 : 0;
+    hoverIndex !== null
+      ? (points[hoverIndex].distance / totalDistance) * 100
+      : 0;
   const hoverYPercent =
     hoverIndex !== null
       ? (1 - (points[hoverIndex].ele - minEle) / eleRange) * 100
       : 0;
+
+  // Clamp label position so text stays inside chart bounds
+  // Labels are ~40px wide, need ~20px clearance. At 600px chart width, that's ~3%
+  const labelPercent = Math.max(2, Math.min(98, hoverPercent));
+
+  // CSS custom properties for the chart geometry (keeps CSS in sync with JS constants)
+  const chartStyle = {
+    "--elevation-ratio": ELEVATION_RATIO,
+  } as React.CSSProperties;
 
   return (
     <div class={styles.container}>
       <div
         ref={chartRef}
         class={styles.chartArea}
+        style={chartStyle}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
         <span class={styles.yAxisMax}>{Math.round(maxEle)}m</span>
         <span class={styles.yAxisMin}>{Math.round(minEle)}m</span>
-        <span class={styles.xAxisEnd}>{(totalDistance / 1000).toFixed(1)}km</span>
+        <span class={styles.xAxisEnd}>
+          {(totalDistance / 1000).toFixed(1)}km
+        </span>
 
         <svg
           class={styles.chart}
-          viewBox={`0 0 ${viewBoxWidth} ${viewBoxExtended}`}
+          viewBox={`0 0 ${VIEW_BOX_WIDTH} ${VIEW_BOX_EXTENDED}`}
           preserveAspectRatio="none"
         >
           <path d={areaD} fill="rgba(255, 0, 0, 0.15)" />
-          <path d={pathD} fill="none" stroke="#ff0000" stroke-width="2" vector-effect="non-scaling-stroke" />
+          <path
+            d={pathD}
+            fill="none"
+            stroke="#ff0000"
+            stroke-width="2"
+            vector-effect="non-scaling-stroke"
+          />
         </svg>
 
         {hoverIndex !== null && (
-          <div class={styles.hoverLine} style={{ left: `${hoverPercent}%` }}>
-            <span class={styles.hoverDot} style={{ top: `${hoverYPercent}%` }} />
-            <span class={styles.hoverEle}>
+          <>
+            <div class={styles.hoverLine} style={{ left: `${hoverPercent}%` }}>
+              <span
+                class={styles.hoverDot}
+                style={{ top: `${hoverYPercent}%` }}
+              />
+            </div>
+            <span class={styles.hoverEle} style={{ left: `${labelPercent}%` }}>
               {Math.round(points[hoverIndex].ele)}m
             </span>
-            <span class={styles.hoverDist}>
+            <span class={styles.hoverDist} style={{ left: `${labelPercent}%` }}>
               {(points[hoverIndex].distance / 1000).toFixed(1)}km
             </span>
-          </div>
+          </>
         )}
       </div>
 
