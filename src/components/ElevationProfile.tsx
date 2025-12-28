@@ -160,40 +160,36 @@ export default function ElevationProfile({ gpxUrl, mapContainerId }: Props) {
 
   return (
     <div class={styles.container}>
-      <div class={styles.chartWrapper}>
+      <div
+        ref={chartRef}
+        class={styles.chartArea}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+      >
         <span class={styles.yAxisMax}>{Math.round(maxEle)}m</span>
         <span class={styles.yAxisMin}>{Math.round(minEle)}m</span>
-
-        <div
-          ref={chartRef}
-          class={styles.chartArea}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-        >
-          <svg
-            class={styles.chart}
-            viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`}
-            preserveAspectRatio="none"
-          >
-            <path d={areaD} fill="rgba(255, 0, 0, 0.15)" />
-            <path d={pathD} fill="none" stroke="#ff0000" stroke-width="2" vector-effect="non-scaling-stroke" />
-          </svg>
-
-          {hoverIndex !== null && (
-            <div class={styles.hoverLine} style={{ left: `${hoverPercent}%` }}>
-              <span class={styles.hoverDot} style={{ top: `${hoverYPercent}%` }} />
-              <span class={styles.hoverEle}>
-                {Math.round(points[hoverIndex].ele)}m
-              </span>
-              <span class={styles.hoverDist}>
-                {(points[hoverIndex].distance / 1000).toFixed(1)}km
-              </span>
-            </div>
-          )}
-        </div>
-
-        <span class={styles.xAxisStart}>0</span>
         <span class={styles.xAxisEnd}>{(totalDistance / 1000).toFixed(1)}km</span>
+
+        <svg
+          class={styles.chart}
+          viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`}
+          preserveAspectRatio="none"
+        >
+          <path d={areaD} fill="rgba(255, 0, 0, 0.15)" />
+          <path d={pathD} fill="none" stroke="#ff0000" stroke-width="2" vector-effect="non-scaling-stroke" />
+        </svg>
+
+        {hoverIndex !== null && (
+          <div class={styles.hoverLine} style={{ left: `${hoverPercent}%` }}>
+            <span class={styles.hoverDot} style={{ top: `${hoverYPercent}%` }} />
+            <span class={styles.hoverEle}>
+              {Math.round(points[hoverIndex].ele)}m
+            </span>
+            <span class={styles.hoverDist}>
+              {(points[hoverIndex].distance / 1000).toFixed(1)}km
+            </span>
+          </div>
+        )}
       </div>
 
       <div class={styles.stats}>
