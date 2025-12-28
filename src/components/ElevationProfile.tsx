@@ -8,8 +8,17 @@ interface ElevationPoint {
   distance: number;
 }
 
+interface TrackData {
+  name: string;
+  points: ElevationPoint[];
+  totalDistance: number;
+  elevationGain: number;
+  minEle: number;
+  maxEle: number;
+}
+
 interface Props {
-  gpxUrl: string;
+  gpxUrls: string[];
   mapContainerId: string;
 }
 
@@ -55,79 +64,103 @@ const VIEW_BOX_EXTENSION = 25; // Extra space below for text coverage
 const VIEW_BOX_EXTENDED = VIEW_BOX_HEIGHT + VIEW_BOX_EXTENSION; // 125
 const ELEVATION_RATIO = VIEW_BOX_HEIGHT / VIEW_BOX_EXTENDED; // 0.8 (80%)
 
-export default function ElevationProfile({ gpxUrl, mapContainerId }: Props) {
-  const [points, setPoints] = useState<ElevationPoint[]>([]);
+export default function ElevationProfile({ gpxUrls, mapContainerId }: Props) {
+  const [tracks, setTracks] = useState<TrackData[]>([]);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const chartRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    async function loadGpx() {
-      try {
-        const response = await fetch(gpxUrl);
-        const gpxText = await response.text();
-        const parser = new DOMParser();
-        const gpxDoc = parser.parseFromString(gpxText, "text/xml");
+    async function loadAllGpx() {
+      const loadedTracks: TrackData[] = [];
 
-        const trackPoints: ElevationPoint[] = [];
-        let cumulativeDistance = 0;
+      for (let i = 0; i < gpxUrls.length; i++) {
+        try {
+          const response = await fetch(gpxUrls[i]);
+          const gpxText = await response.text();
+          const parser = new DOMParser();
+          const gpxDoc = parser.parseFromString(gpxText, "text/xml");
 
-        const segments = gpxDoc.querySelectorAll("trkseg");
-        segments.forEach((seg, segIndex) => {
-          const pts = seg.querySelectorAll("trkpt");
-          pts.forEach((pt, ptIndex) => {
-            const lat = parseFloat(pt.getAttribute("lat") || "0");
-            const lon = parseFloat(pt.getAttribute("lon") || "0");
-            const eleNode = pt.querySelector("ele");
-            const ele = eleNode ? parseFloat(eleNode.textContent || "0") : 0;
+          // Try to get track name from GPX
+          const nameNode = gpxDoc.querySelector("trk > name") || gpxDoc.querySelector("metadata > name");
+          const trackName = nameNode?.textContent || `Track ${i + 1}`;
 
-            if (segIndex > 0 && ptIndex === 0) {
-              // New segment - don't add distance from previous segment
-            } else if (trackPoints.length > 0) {
-              const prev = trackPoints[trackPoints.length - 1];
-              cumulativeDistance += haversineDistance(
-                prev.lat,
-                prev.lon,
-                lat,
-                lon
-              );
+          const trackPoints: ElevationPoint[] = [];
+          let cumulativeDistance = 0;
+
+          const segments = gpxDoc.querySelectorAll("trkseg");
+          segments.forEach((seg, segIndex) => {
+            const pts = seg.querySelectorAll("trkpt");
+            pts.forEach((pt, ptIndex) => {
+              const lat = parseFloat(pt.getAttribute("lat") || "0");
+              const lon = parseFloat(pt.getAttribute("lon") || "0");
+              const eleNode = pt.querySelector("ele");
+              const ele = eleNode ? parseFloat(eleNode.textContent || "0") : 0;
+
+              if (segIndex > 0 && ptIndex === 0) {
+                // New segment - don't add distance from previous segment
+              } else if (trackPoints.length > 0) {
+                const prev = trackPoints[trackPoints.length - 1];
+                cumulativeDistance += haversineDistance(
+                  prev.lat,
+                  prev.lon,
+                  lat,
+                  lon
+                );
+              }
+
+              trackPoints.push({ lon, lat, ele, distance: cumulativeDistance });
+            });
+          });
+
+          if (trackPoints.length > 0) {
+            const elevations = trackPoints.map((p) => p.ele);
+            const minEle = Math.min(...elevations);
+            const maxEle = Math.max(...elevations);
+            const totalDistance = trackPoints[trackPoints.length - 1].distance;
+
+            let elevationGain = 0;
+            for (let j = 1; j < trackPoints.length; j++) {
+              const diff = trackPoints[j].ele - trackPoints[j - 1].ele;
+              if (diff > 0) elevationGain += diff;
             }
 
-            trackPoints.push({ lon, lat, ele, distance: cumulativeDistance });
-          });
-        });
-
-        setPoints(trackPoints);
-      } catch (error) {
-        console.error("Error loading GPX for elevation:", error);
+            loadedTracks.push({
+              name: trackName,
+              points: trackPoints,
+              totalDistance,
+              elevationGain,
+              minEle,
+              maxEle,
+            });
+          }
+        } catch (error) {
+          console.error(`Error loading GPX ${gpxUrls[i]}:`, error);
+        }
       }
+
+      setTracks(loadedTracks);
     }
 
-    loadGpx();
-  }, [gpxUrl]);
+    loadAllGpx();
+  }, [gpxUrls]);
 
   useEffect(() => {
+    const track = tracks[selectedIndex];
     const event = new CustomEvent("elevation-hover", {
       detail:
-        hoverIndex !== null
-          ? { lon: points[hoverIndex].lon, lat: points[hoverIndex].lat }
+        hoverIndex !== null && track
+          ? { lon: track.points[hoverIndex].lon, lat: track.points[hoverIndex].lat }
           : null,
     });
     document.getElementById(mapContainerId)?.dispatchEvent(event);
-  }, [hoverIndex, points, mapContainerId]);
+  }, [hoverIndex, tracks, selectedIndex, mapContainerId]);
 
-  if (points.length === 0) return null;
+  if (tracks.length === 0) return null;
 
-  const elevations = points.map((p) => p.ele);
-  const minEle = Math.min(...elevations);
-  const maxEle = Math.max(...elevations);
+  const track = tracks[selectedIndex];
+  const { points, totalDistance, elevationGain, minEle, maxEle } = track;
   const eleRange = maxEle - minEle || 1;
-  const totalDistance = points[points.length - 1].distance;
-
-  let elevationGain = 0;
-  for (let i = 1; i < points.length; i++) {
-    const diff = points[i].ele - points[i - 1].ele;
-    if (diff > 0) elevationGain += diff;
-  }
 
   const pathD = points
     .map((p, i) => {
@@ -266,6 +299,17 @@ export default function ElevationProfile({ gpxUrl, mapContainerId }: Props) {
         <span>
           Range: {Math.round(minEle)}–{Math.round(maxEle)} m
         </span>
+        {tracks.length > 1 && (
+          <select
+            class={styles.trackSelector}
+            value={selectedIndex}
+            onChange={(e) => setSelectedIndex(Number((e.target as HTMLSelectElement).value))}
+          >
+            {tracks.map((t, i) => (
+              <option key={i} value={i}>{t.name}</option>
+            ))}
+          </select>
+        )}
       </div>
     </div>
   );

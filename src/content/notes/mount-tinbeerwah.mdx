@@ -13,11 +13,11 @@ I was hoping this would be a trudge through the creek finished off with a vista 
 The out-and-back summit walk is (as far as I can tell) completely separate from any other walking track in this part of Tewantin National Park. It's also 500 metres from a carpark (inclusve of coach parking) so it was busy.
 The summit itself is scenic but slightly ruined by the fencing everywhere.
 
-<MapViewer gpxUrl="/mount-tinbeerwah-summit.gpx" />
+<MapViewer gpxUrl="/tracks/mount-tinbeerwah-summit.gpx" />
 
 I drove a few minutes down the hill to get those proper K's in. It seems like the summit and surrounding bushtrack aren't connected.
 
-<MapViewer gpxUrl="/tinbeerwah-mckinnon.gpx" />
+<MapViewer gpxUrl="/tracks/tinbeerwah-mckinnon.gpx" />
 
 Starting at Tinbeerwah Road and walking clockwise, I walked north to McKinnon Drive, east along McKinnon Drive Singletrack, and then back around via Harry's shortcut.
 
@@ -27,4 +27,10 @@ Cooroibah Creek was nice.
 
 All of that put together:
 
-<MapViewer gpxUrl="/tinbeerwah-both.gpx" showElevationProfile={false} />
+<MapViewer
+  gpxUrls={[
+    "/tracks/mount-tinbeerwah-summit.gpx",
+    "/tracks/tinbeerwah-mckinnon.gpx",
+  ]}
+  showElevationProfile={false}
+/>

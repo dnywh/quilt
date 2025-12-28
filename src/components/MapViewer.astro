@@ -3,12 +3,16 @@ import ElevationProfile from "./ElevationProfile.tsx";
 
 interface Props {
   gpxUrl?: string;
+  gpxUrls?: string[];
   center?: [number, number];
   zoom?: number;
   showElevationProfile?: boolean;
 }
 
-const { gpxUrl, center = [-122.4194, 37.7749], zoom = 13, showElevationProfile = true } = Astro.props;
+const { gpxUrl, gpxUrls, center = [-122.4194, 37.7749], zoom = 13, showElevationProfile = true } = Astro.props;
+
+// Normalize to array - supports both single gpxUrl and gpxUrls array
+const allGpxUrls = gpxUrls ?? (gpxUrl ? [gpxUrl] : []);
 // Generate a unique ID for this MapViewer instance
 const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
 ---
@@ -16,18 +20,23 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
 <figure>
   <div
     id={mapId}
-    data-gpx-url={gpxUrl}
+    data-gpx-urls={JSON.stringify(allGpxUrls)}
     data-center={JSON.stringify(center)}
     data-zoom={zoom}
   >
   </div>
-  {gpxUrl && showElevationProfile && (
-    <ElevationProfile gpxUrl={gpxUrl} mapContainerId={mapId} client:load />
+  {allGpxUrls.length > 0 && showElevationProfile && (
+    <ElevationProfile gpxUrls={allGpxUrls} mapContainerId={mapId} client:load />
   )}
   <figcaption>
-    {gpxUrl && (
+    {allGpxUrls.length > 0 && (
       <>
-        <a href={gpxUrl} download>Download GPX</a> ·{" "}
+        {allGpxUrls.map((url, i) => (
+          <>
+            <a href={url} download>Download GPX{allGpxUrls.length > 1 ? ` ${i + 1}` : ''}</a>
+            {i < allGpxUrls.length - 1 ? ' · ' : ' · '}
+          </>
+        ))}
       </>
     )}
     Map data <a href="https://www.openstreetmap.org/copyright"
@@ -81,7 +90,8 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
         ? JSON.parse(centerAttr)
         : [-122.4194, 37.7749];
       const defaultZoom = zoomAttr ? parseInt(zoomAttr, 10) : 13;
-      const gpxUrl = mapContainer.getAttribute("data-gpx-url");
+      const gpxUrlsAttr = mapContainer.getAttribute("data-gpx-urls");
+      const gpxUrls: string[] = gpxUrlsAttr ? JSON.parse(gpxUrlsAttr) : [];
 
       // Helper function to calculate bounds from track points
       const calculateBounds = (
@@ -111,17 +121,22 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
         ] as [number, number];
       };
 
-      // Initialize map - if GPX URL is provided, fetch and parse it first
+      // Track colors for multiple GPX files
+      const trackColors = ["#ff0000", "#0066ff", "#00aa44", "#ff6600", "#9900cc"];
+
+      // Initialize map - if GPX URLs are provided, fetch and parse them first
       const initializeMap = async () => {
         let initialCenter = defaultCenter;
         let initialZoom = defaultZoom;
-        let trackPoints: [number, number][] = [];
+        let allTrackPoints: [number, number][] = [];
 
-        // If GPX URL is provided, fetch and parse it before creating the map
-        let trackSegments: [number, number][][] = [];
-        if (gpxUrl) {
+        // Store segments per GPX file for rendering
+        const allTracks: { segments: [number, number][][]; color: string }[] = [];
+
+        // Load all GPX files
+        for (let i = 0; i < gpxUrls.length; i++) {
           try {
-            const response = await fetch(gpxUrl);
+            const response = await fetch(gpxUrls[i]);
             const gpxText = await response.text();
 
             // Parse GPX - handle multiple tracks/segments separately
@@ -129,6 +144,7 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
             const gpxDoc = parser.parseFromString(gpxText, "text/xml");
 
             // Get all track segments (each <trkseg> becomes a separate line)
+            const trackSegments: [number, number][][] = [];
             const segments = gpxDoc.querySelectorAll("trkseg");
             segments.forEach((seg) => {
               const segmentPoints: [number, number][] = Array.from(
@@ -143,19 +159,24 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
               }
             });
 
-            // Flatten for bounds calculation
-            trackPoints = trackSegments.flat();
-
-            if (trackPoints.length > 0) {
-              // Calculate bounds and center from GPX track
-              const bounds = calculateBounds(trackPoints);
-              initialCenter = getCenterFromBounds(bounds);
-              // Use a reasonable zoom level - you can adjust this
-              initialZoom = 13;
+            if (trackSegments.length > 0) {
+              allTracks.push({
+                segments: trackSegments,
+                color: trackColors[i % trackColors.length],
+              });
+              // Add to all points for bounds calculation
+              allTrackPoints = allTrackPoints.concat(trackSegments.flat());
             }
           } catch (error) {
-            console.error("Error loading GPX file:", error);
+            console.error(`Error loading GPX file ${gpxUrls[i]}:`, error);
           }
+        }
+
+        if (allTrackPoints.length > 0) {
+          // Calculate bounds and center from all GPX tracks
+          const bounds = calculateBounds(allTrackPoints);
+          initialCenter = getCenterFromBounds(bounds);
+          initialZoom = 13;
         }
 
         // Create map with the calculated center
@@ -199,66 +220,73 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
           }
         }) as EventListener);
 
-        // If we have GPX track points, add them to the map
-        if (gpxUrl && trackSegments.length > 0) {
+        // If we have GPX tracks, add them to the map
+        if (allTracks.length > 0) {
           map.on("load", () => {
-            // Add GPX track as a MultiLineString (handles multiple segments)
-            map.addSource("gpx-track", {
-              type: "geojson",
-              data: {
-                type: "Feature",
-                properties: {},
-                geometry: {
-                  type: "MultiLineString",
-                  coordinates: trackSegments,
-                },
-              },
-            });
+            // Add each track as a separate source/layer with its own color
+            allTracks.forEach((track, index) => {
+              const sourceId = `gpx-track-${index}`;
+              const layerId = `gpx-track-layer-${index}`;
+              const arrowsLayerId = `gpx-track-arrows-${index}`;
 
-            map.addLayer({
-              id: "gpx-track-layer",
-              type: "line",
-              source: "gpx-track",
-              layout: {
-                "line-join": "round",
-                "line-cap": "round",
-              },
-              paint: {
-                "line-color": "#ff0000",
-                "line-width": 4,
-                "line-opacity": 0.9,
-              },
-            });
-
-            // Add directional chevrons along the track
-            const chevronSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
-              <path d="M2 1 L6 6 L2 11" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M6 1 L10 6 L6 11" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>`;
-            const chevronImg = new Image(12, 12);
-            chevronImg.onload = () => {
-              map.addImage("direction-chevrons", chevronImg);
-              map.addLayer({
-                id: "gpx-track-arrows",
-                type: "symbol",
-                source: "gpx-track",
-                layout: {
-                  "symbol-placement": "line",
-                  "symbol-spacing": 20,
-                  "icon-image": "direction-chevrons",
-                  "icon-size": 0.5,
-                  "icon-allow-overlap": true,
-                  "icon-rotation-alignment": "map",
+              map.addSource(sourceId, {
+                type: "geojson",
+                data: {
+                  type: "Feature",
+                  properties: {},
+                  geometry: {
+                    type: "MultiLineString",
+                    coordinates: track.segments,
+                  },
                 },
               });
-            };
-            chevronImg.src = `data:image/svg+xml;base64,${btoa(chevronSvg)}`;
 
-            // Fit map to GPX track bounds without animation (duration: 0)
-            const bounds = calculateBounds(trackPoints);
+              map.addLayer({
+                id: layerId,
+                type: "line",
+                source: sourceId,
+                layout: {
+                  "line-join": "round",
+                  "line-cap": "round",
+                },
+                paint: {
+                  "line-color": track.color,
+                  "line-width": 4,
+                  "line-opacity": 0.9,
+                },
+              });
+
+              // Add directional chevrons along the track
+              const chevronSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
+                <path d="M2 1 L6 6 L2 11" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M6 1 L10 6 L6 11" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>`;
+              const chevronImg = new Image(12, 12);
+              const imageId = `direction-chevrons-${index}`;
+              chevronImg.onload = () => {
+                map.addImage(imageId, chevronImg);
+                map.addLayer({
+                  id: arrowsLayerId,
+                  type: "symbol",
+                  source: sourceId,
+                  layout: {
+                    "symbol-placement": "line",
+                    "symbol-spacing": 20,
+                    "icon-image": imageId,
+                    "icon-size": 0.5,
+                    "icon-allow-overlap": true,
+                    "icon-rotation-alignment": "map",
+                  },
+                });
+              };
+              chevronImg.src = `data:image/svg+xml;base64,${btoa(chevronSvg)}`;
+            });
+
+            // Fit map to all GPX tracks bounds without animation
+            const bounds = calculateBounds(allTrackPoints);
             map.fitBounds(bounds, {
               padding: 50,
-              duration: 0, // No animation - instant fit
+              duration: 0,
             });
           });
         }
