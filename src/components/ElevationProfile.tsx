@@ -141,10 +141,11 @@ export default function ElevationProfile({ gpxUrl, mapContainerId }: Props) {
   // Area fill extends to the bottom of the extended viewBox
   const areaD = `${pathD} L ${VIEW_BOX_WIDTH} ${VIEW_BOX_EXTENDED} L 0 ${VIEW_BOX_EXTENDED} Z`;
 
-  const handleMouseMove = (e: MouseEvent) => {
+  // Shared handler for both mouse and touch - finds closest point to X position
+  const updateHoverFromClientX = (clientX: number) => {
     if (!chartRef.current) return;
     const rect = chartRef.current.getBoundingClientRect();
-    const relX = (e.clientX - rect.left) / rect.width;
+    const relX = (clientX - rect.left) / rect.width;
 
     if (relX < 0 || relX > 1) {
       setHoverIndex(null);
@@ -164,7 +165,29 @@ export default function ElevationProfile({ gpxUrl, mapContainerId }: Props) {
     setHoverIndex(closest);
   };
 
+  const handleMouseMove = (e: MouseEvent) => {
+    updateHoverFromClientX(e.clientX);
+  };
+
   const handleMouseLeave = () => {
+    setHoverIndex(null);
+  };
+
+  // Touch handlers for mobile scrubbing
+  const handleTouchStart = (e: TouchEvent) => {
+    if (e.touches.length === 1) {
+      updateHoverFromClientX(e.touches[0].clientX);
+    }
+  };
+
+  const handleTouchMove = (e: TouchEvent) => {
+    if (e.touches.length === 1) {
+      e.preventDefault(); // Prevent scrolling while scrubbing
+      updateHoverFromClientX(e.touches[0].clientX);
+    }
+  };
+
+  const handleTouchEnd = () => {
     setHoverIndex(null);
   };
 
@@ -194,6 +217,9 @@ export default function ElevationProfile({ gpxUrl, mapContainerId }: Props) {
         style={chartStyle}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         <span class={styles.yAxisMax}>{Math.round(maxEle)}m</span>
         <span class={styles.yAxisMin}>{Math.round(minEle)}m</span>

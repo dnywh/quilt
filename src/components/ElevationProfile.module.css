@@ -19,6 +19,9 @@
   position: relative;
   height: 80px;
   cursor: crosshair;
+  touch-action: none; /* Enables smooth touch scrubbing without browser interference */
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .chart {
