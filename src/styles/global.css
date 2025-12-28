@@ -1,5 +1,6 @@
 html,
-body {
+body,
+figure {
   margin: 0;
   width: 100%;
   height: 100%;
@@ -13,7 +14,7 @@ html {
 body {
   /* margin: 0 auto; */
   width: 100%;
-  max-width: 80ch;
+  /* max-width: 80ch; */
   padding: 1rem;
   line-height: 1.5;
 }

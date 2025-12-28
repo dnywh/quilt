@@ -1,11 +1,15 @@
 ---
 import Layout from "../../layouts/BaseLayout.astro";
-import EphemeraTiles from "../../components/EphemeraTiles.astro";
+import EphemeraTile from "../../components/EphemeraTile.astro";
 import { getCollection } from "astro:content";
 
-// Get total count for the header (all items are visible, hidden ones are in separate file)
+const pageSize = 24;
 const allItems = await getCollection("ephemera");
-const count = allItems.length;
+const items = allItems.sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime()
+);
+const count = items.length;
+const needsPagination = items.length > pageSize;
 const pageTitle = "Ephemera";
 ---
 
@@ -19,13 +23,62 @@ const pageTitle = "Ephemera";
       </p>
     </header>
 
-    <EphemeraTiles />
+    <section class="ephemera-grid" data-page-size={pageSize}>
+      {items.map((item, index) => (
+        <div
+          class:list={[
+            "ephemera-grid-item",
+            { "ephemera-hidden": needsPagination && index >= pageSize },
+          ]}
+        >
+          <EphemeraTile itemId={item.id} />
+        </div>
+      ))}
+
+      {needsPagination && (
+        <div class="ephemera-pagination">
+          <button class="ephemera-load-more" type="button">
+            Load more
+            <span class="ephemera-count">
+              (showing <span data-visible>{pageSize}</span> of {count})
+            </span>
+          </button>
+        </div>
+      )}
+    </section>
   </main>
 </Layout>
 
+{needsPagination && (
+  <script>
+    const section = document.querySelector(".ephemera-grid") as HTMLElement;
+    const button = document.querySelector(".ephemera-load-more") as HTMLButtonElement;
+    const visibleCount = document.querySelector("[data-visible]") as HTMLSpanElement;
+    const pageSize = parseInt(section?.dataset.pageSize || "24", 10);
+    const items = section?.querySelectorAll(".ephemera-grid-item") as NodeListOf<HTMLElement>;
+    const total = items?.length || 0;
+    let shown = pageSize;
+
+    button?.addEventListener("click", () => {
+      const nextBatch = Math.min(shown + pageSize, total);
+
+      for (let i = shown; i < nextBatch; i++) {
+        items[i]?.classList.remove("ephemera-hidden");
+      }
+
+      shown = nextBatch;
+      visibleCount.textContent = String(shown);
+
+      if (shown >= total) {
+        button.parentElement?.remove();
+      }
+    });
+  </script>
+)}
+
 <style>
   .ephemera-page {
-    max-width: 900px;
+    // max-width: 900px;
     margin: 0 auto;
     padding: 2rem 1rem 4rem;
   }
@@ -47,6 +100,52 @@ const pageTitle = "Ephemera";
     font-size: 1.125rem;
     color: #6b7280;
     margin: 0;
+  }
+
+  /* Gap should match the max width of the image-frame */
+  .ephemera-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  .ephemera-hidden {
+    display: none;
+  }
+
+  .ephemera-pagination {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+    padding: 1rem 0;
+  }
+
+  .ephemera-load-more {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: #374151;
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    cursor: pointer;
+    transition:
+      background 0.15s,
+      border-color 0.15s;
+  }
+
+  .ephemera-load-more:hover {
+    background: #f9fafb;
+    border-color: #9ca3af;
+  }
+
+  .ephemera-count {
+    font-weight: 400;
+    color: #6b7280;
+    font-size: 0.875rem;
   }
 
   @media (max-width: 640px) {

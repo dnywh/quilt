@@ -1879,10 +1879,11 @@
     "country": "Australia"
   },
   {
-    "name": "Resch's Coaster",
+    "name": "Resch’s Coaster",
     "date": "2019-12-06",
     "tags": ["coaster"],
-    "images": ["reschs-coaster"],
+    "images": ["reschs-coaster.png"],
+    "hasTransparency": true,
     "venue": "Landsdowne Hotel",
     "location": "Chippendale, NSW",
     "country": "Australia"
@@ -1935,7 +1936,7 @@
     "name": "Datadog",
     "date": "2019-09-16",
     "tags": ["sticker", "badge"],
-    "images": ["datadog-visit"],
+    "images": ["datadog-visit.png"],
     "venue": "The New York Times Building",
     "location": "Times Square, New York, NY",
     "country": "USA"
@@ -1961,7 +1962,8 @@
     "name": "Bingo card",
     "date": "2019-09-11",
     "tags": ["ticket", "lexi"],
-    "images": ["bingo-card"],
+    "images": ["bingo-card.png"],
+    "hasTransparency": true,
     "venue": "Madame Marie’s",
     "location": "Astoria, Queens, NY",
     "country": "USA"
@@ -1986,7 +1988,8 @@
     "name": "The Cliffs Card",
     "date": "2019-09-09",
     "tags": ["card", "keychain"],
-    "images": ["the-cliffs-card"],
+    "images": ["the-cliffs-card.png"],
+    "hasTransparency": true,
     "location": "New York, NY",
     "country": "USA"
   },
@@ -1994,7 +1997,8 @@
     "name": "Metro-North Ticket",
     "date": "2019-09-04",
     "tags": ["ticket"],
-    "images": ["metro-north-ticket"],
+    "images": ["metro-north-ticket.png"],
+    "hasTransparency": true,
     "venue": "Union Station",
     "location": "New Haven, CT",
     "country": "USA"
@@ -2291,7 +2295,8 @@
     "name": "New York Tech Zine Fair",
     "date": "2018-12-01",
     "tags": ["packaging"],
-    "images": ["new-york-tech-zine-fair"],
+    "images": ["new-york-tech-zine-fair.png"],
+    "hasTransparency": true,
     "venue": "School for Poetic Computation",
     "location": "New York, NY",
     "country": "USA"
@@ -2509,7 +2514,8 @@
     "name": "Loupe 2018 Sticker",
     "date": "2018-09-20",
     "tags": ["sticker"],
-    "images": ["loupe-2018-sticker"],
+    "images": ["loupe-2018-sticker.png"],
+    "hasTransparency": true,
     "location": "Amsterdam Noord",
     "country": "Netherlands"
   },
@@ -2664,7 +2670,8 @@
     "name": "Access Fund",
     "date": "2018-06-09",
     "tags": ["nature", "hiking", "camping", "climbing", "keychain"],
-    "images": ["access-fund"],
+    "images": ["access-fund.png"],
+    "hasTransparency": true,
     "venue": "Mohonk Preserve",
     "location": "Gardiner, NY",
     "country": "USA"

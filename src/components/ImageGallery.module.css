@@ -9,7 +9,7 @@
   max-height: 600px;
   padding: 1.5rem;
   background: #f9fafb;
-  border-radius: 12px;
+  /* border-radius: 12px; */
 }
 
 /* camelCase */
@@ -36,7 +36,7 @@
 }
 
 .thumb {
-  padding: 0;
+  padding: 0.5rem;
   border: 2px solid transparent;
   background: #f3f4f6;
   border-radius: 6px;

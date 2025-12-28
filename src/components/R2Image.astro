@@ -7,9 +7,9 @@ export interface R2ImageProps extends Omit<
 > {
   /** Path to the image relative to the R2 bucket root (e.g., 'ephemera/my-image.jpg') */
   src: string;
-  /** Display width of the image */
+  /** Original width of the image (used for aspect ratio calculation) */
   width: number;
-  /** Display height of the image */
+  /** Original height of the image (used for aspect ratio calculation) */
   height?: number;
   /** Alt text for the image */
   alt: string;
@@ -23,7 +23,7 @@ export interface R2ImageProps extends Omit<
   dpr?: number;
   /** Custom breakpoints for srcset generation */
   widths?: number[];
-  /** Sizes attribute for responsive images */
+  /** Sizes attribute for responsive images. Defaults to "(max-width: 768px) 100vw, 33vw" (conservative estimate for grids). Override for accurate sizing, e.g., "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw" */
   sizes?: string;
   /** Loading strategy */
   loading?: "lazy" | "eager";
@@ -85,23 +85,13 @@ function buildR2Url(
   return `${R2_BASE_URL}/cdn-cgi/image/${transforms.join(",")}/${path}`;
 }
 
-// Generate the primary src URL
-const primarySrc = buildR2Url(src, {
-  width,
-  height,
-  fit,
-  quality,
-  format,
-  dpr,
-});
+// Calculate aspect ratio for responsive sizing
+const aspectRatio = height ? width / height : undefined;
 
 // Generate srcset for responsive images
-// Default breakpoints based on common device widths, capped at 2x the display width
-const defaultWidths = [200, 400, 600, 800, 1200, 1600].filter(
-  (w) => w <= width * 2
-);
-const srcsetWidths =
-  widths || (defaultWidths.length > 0 ? defaultWidths : [width]);
+// Use common responsive breakpoints that work well for containers
+const defaultWidths = widths || [400, 600, 800, 1200, 1600, 2400];
+const srcsetWidths = defaultWidths;
 
 const srcset = srcsetWidths
   .map((w) => {
@@ -116,8 +106,20 @@ const srcset = srcsetWidths
   })
   .join(", ");
 
-// Default sizes if not provided - assumes image takes up reasonable viewport space
-const defaultSizes = sizes || `(max-width: ${width}px) 100vw, ${width}px`;
+// Default sizes: conservative estimate for typical layouts
+// Assumes images are full-width on mobile, ~33% width on larger screens (typical for grids)
+// User can override with sizes prop for more specific breakpoints
+const defaultSizes = sizes || "(max-width: 768px) 100vw, 33vw";
+
+// Generate a fallback src at a reasonable size (800px is a good default)
+const fallbackWidth = 800;
+const primarySrc = buildR2Url(src, {
+  width: fallbackWidth,
+  height: height ? Math.round(height * (fallbackWidth / width)) : undefined,
+  fit,
+  quality,
+  format,
+});
 
 // Combine class names
 const imageClassName = className ? `r2-image ${className}` : "r2-image";
@@ -134,5 +136,14 @@ const imageClassName = className ? `r2-image ${className}` : "r2-image";
   decoding={decoding}
   fetchpriority={fetchpriority}
   class={imageClassName}
+  style={aspectRatio ? `aspect-ratio: ${width} / ${height};` : undefined}
   {...rest}
 />
+
+<style>
+  .r2-image {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+</style>
