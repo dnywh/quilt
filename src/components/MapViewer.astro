@@ -9,7 +9,13 @@ interface Props {
   showElevationProfile?: boolean;
 }
 
-const { gpxUrl, gpxUrls, center = [-122.4194, 37.7749], zoom = 13, showElevationProfile = true } = Astro.props;
+const {
+  gpxUrl,
+  gpxUrls,
+  center = [-122.4194, 37.7749],
+  zoom = 13,
+  showElevationProfile = true,
+} = Astro.props;
 
 // Normalize to array - supports both single gpxUrl and gpxUrls array
 const allGpxUrls = gpxUrls ?? (gpxUrl ? [gpxUrl] : []);
@@ -18,6 +24,7 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
 ---
 
 <figure>
+  <!-- Map container -->
   <div
     id={mapId}
     data-gpx-urls={JSON.stringify(allGpxUrls)}
@@ -25,37 +32,54 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
     data-zoom={zoom}
   >
   </div>
-  {allGpxUrls.length > 0 && showElevationProfile && (
-    <ElevationProfile gpxUrls={allGpxUrls} mapContainerId={mapId} client:load />
-  )}
-  <figcaption>
-    {allGpxUrls.length > 0 && (
-      <>
-        {allGpxUrls.map((url, i) => (
+  <!-- Elevation profile and caption -->
+  <div>
+    {
+      allGpxUrls.length > 0 && showElevationProfile && (
+        <ElevationProfile
+          gpxUrls={allGpxUrls}
+          mapContainerId={mapId}
+          client:load
+        />
+      )
+    }
+    <figcaption>
+      {
+        allGpxUrls.length > 0 && (
           <>
-            <a href={url} download>Download GPX{allGpxUrls.length > 1 ? ` ${i + 1}` : ''}</a>
-            {i < allGpxUrls.length - 1 ? ' · ' : ' · '}
+            {allGpxUrls.map((url, i) => (
+              <>
+                <a href={url} download>
+                  GPX{allGpxUrls.length > 1 ? ` ${i + 1}` : ""} ↓
+                </a>
+                {i < allGpxUrls.length - 1 ? " · " : " · "}
+              </>
+            ))}
           </>
-        ))}
-      </>
-    )}
-    Map data <a href="https://www.openstreetmap.org/copyright"
-      >© OpenStreetMap contributors</a
-    >. Tiles by <a href="https://www.maptiler.com/">MapTiler</a>. Rendered with <a
-      href="https://maplibre.org/">MapLibre</a
-    >.
-  </figcaption>
+        )
+      }
+      Map data from <a href="https://www.openstreetmap.org/copyright"
+        >OpenStreetMap</a
+      > contributors. Tiles by <a href="https://www.maptiler.com/">MapTiler</a>.
+      Rendered with <a href="https://maplibre.org/">MapLibre</a>.
+    </figcaption>
+  </div>
 </figure>
 
 <style>
   figure {
     width: 100%;
-    margin: 0;
+    margin: 2.5rem 0;
+
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
     figcaption {
       font-size: 12px;
       color: #666;
-      text-align: center;
-      margin-top: 10px;
+      /* text-align: center; */
+      /* margin-top: 10px;  */
     }
   }
   [id^="map-viewer-"] {
@@ -122,7 +146,13 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
       };
 
       // Track colors for multiple GPX files
-      const trackColors = ["#ff0000", "#0066ff", "#00aa44", "#ff6600", "#9900cc"];
+      const trackColors = [
+        "#ff0000",
+        "#0066ff",
+        "#00aa44",
+        "#ff6600",
+        "#9900cc",
+      ];
 
       // Initialize map - if GPX URLs are provided, fetch and parse them first
       const initializeMap = async () => {
@@ -131,7 +161,8 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
         let allTrackPoints: [number, number][] = [];
 
         // Store segments per GPX file for rendering
-        const allTracks: { segments: [number, number][][]; color: string }[] = [];
+        const allTracks: { segments: [number, number][][]; color: string }[] =
+          [];
 
         // Load all GPX files
         for (let i = 0; i < gpxUrls.length; i++) {

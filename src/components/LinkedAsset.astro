@@ -1,0 +1,33 @@
+---
+import { R2_BASE_URL } from "../lib/config";
+
+interface Props {
+  url: string;
+  title: string;
+  description?: string;
+}
+
+const { url, title, description } = Astro.props;
+---
+
+<aside>
+  <a
+    href={`${R2_BASE_URL}/assets/${url}`}
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    <h5>{title}</h5>
+    {description && <p>{description}</p>}
+  </a>
+</aside>
+
+<style>
+  aside {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    border: 1px solid #e0e0e0;
+    padding: 0.5rem;
+    line-height: 1.2;
+  }
+</style>
