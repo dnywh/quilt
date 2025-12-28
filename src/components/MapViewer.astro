@@ -178,10 +178,34 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
               },
               paint: {
                 "line-color": "#ff0000",
-                "line-width": 3,
-                "line-opacity": 0.8,
+                "line-width": 4,
+                "line-opacity": 0.9,
               },
             });
+
+            // Add directional chevrons along the track
+            const chevronSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
+              <path d="M2 1 L6 6 L2 11" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M6 1 L10 6 L6 11" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>`;
+            const chevronImg = new Image(12, 12);
+            chevronImg.onload = () => {
+              map.addImage("direction-chevrons", chevronImg);
+              map.addLayer({
+                id: "gpx-track-arrows",
+                type: "symbol",
+                source: "gpx-track",
+                layout: {
+                  "symbol-placement": "line",
+                  "symbol-spacing": 10,
+                  "icon-image": "direction-chevrons",
+                  "icon-size": 0.75,
+                  "icon-allow-overlap": true,
+                  "icon-rotation-alignment": "map",
+                },
+              });
+            };
+            chevronImg.src = `data:image/svg+xml;base64,${btoa(chevronSvg)}`;
 
             // Fit map to GPX track bounds without animation (duration: 0)
             const bounds = calculateBounds(trackPoints);
