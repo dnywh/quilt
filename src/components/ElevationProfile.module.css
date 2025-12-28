@@ -1,6 +1,6 @@
 .container {
   width: 100%;
-  margin-top: 12px;
+  margin: 2rem 0;
 }
 
 .chartArea {
@@ -15,11 +15,12 @@
   height: 100%;
 }
 
-/* Y-axis labels - overlaid on chart */
+/* Y-axis labels - full width with borders as grid lines */
 .yAxisMax,
 .yAxisMin {
   position: absolute;
   left: 0;
+  width: 100%;
   font-size: 11px;
   line-height: 1;
   color: #666;
@@ -28,29 +29,30 @@
 .yAxisMax {
   top: 0;
   transform: translateY(-100%);
-  border-bottom: 1px solid rgba(255, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(255, 0, 0, 0.2);
 }
 
+/* Position at 83.33% (100/120 of viewBox) where the elevation floor sits */
 .yAxisMin {
-  bottom: 0;
-  border-top: 1px solid rgba(255, 0, 0, 0.1);
+  top: 83.33%;
+  border-top: 1px solid rgba(255, 0, 0, 0.2);
 }
 
-/* X-axis label - overlaid at bottom right */
+/* X-axis label - aligned with yAxisMin */
 .xAxisEnd {
   position: absolute;
-  bottom: 0;
+  top: 83.33%;
   right: 0;
   font-size: 11px;
   line-height: 1;
   color: #666;
 }
 
-/* Hover indicator */
+/* Hover indicator - only spans the elevation data area */
 .hoverLine {
   position: absolute;
   top: 0;
-  bottom: 0;
+  height: 83.33%;
   width: 1px;
   background: #666;
   pointer-events: none;
@@ -93,8 +95,8 @@
 
 .stats {
   display: flex;
-  justify-content: space-between;
+  gap: 0.5rem;
   font-size: 12px;
   color: #666;
-  margin-top: 4px;
+  margin-top: 1rem;
 }

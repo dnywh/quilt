@@ -110,9 +110,10 @@ export default function ElevationProfile({ gpxUrl, mapContainerId }: Props) {
     if (diff > 0) elevationGain += diff;
   }
 
-  // SVG path uses full viewBox (no padding - padding handled by CSS)
+  // SVG viewBox: line uses 0-100 for elevation, extra 20 at bottom for text coverage
   const viewBoxWidth = 100;
   const viewBoxHeight = 100;
+  const viewBoxExtended = 120; // Extra space below for the "lie"
 
   const pathD = points
     .map((p, i) => {
@@ -122,7 +123,8 @@ export default function ElevationProfile({ gpxUrl, mapContainerId }: Props) {
     })
     .join(" ");
 
-  const areaD = `${pathD} L ${viewBoxWidth} ${viewBoxHeight} L 0 ${viewBoxHeight} Z`;
+  // Area fill extends to the bottom of the extended viewBox
+  const areaD = `${pathD} L ${viewBoxWidth} ${viewBoxExtended} L 0 ${viewBoxExtended} Z`;
 
   const handleMouseMove = (e: MouseEvent) => {
     if (!chartRef.current) return;
@@ -172,7 +174,7 @@ export default function ElevationProfile({ gpxUrl, mapContainerId }: Props) {
 
         <svg
           class={styles.chart}
-          viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`}
+          viewBox={`0 0 ${viewBoxWidth} ${viewBoxExtended}`}
           preserveAspectRatio="none"
         >
           <path d={areaD} fill="rgba(255, 0, 0, 0.15)" />
