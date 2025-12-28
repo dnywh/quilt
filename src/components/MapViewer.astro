@@ -107,21 +107,33 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
         let trackPoints: [number, number][] = [];
 
         // If GPX URL is provided, fetch and parse it before creating the map
+        let trackSegments: [number, number][][] = [];
         if (gpxUrl) {
           try {
             const response = await fetch(gpxUrl);
             const gpxText = await response.text();
 
-            // Parse GPX
+            // Parse GPX - handle multiple tracks/segments separately
             const parser = new DOMParser();
             const gpxDoc = parser.parseFromString(gpxText, "text/xml");
-            trackPoints = Array.from(gpxDoc.querySelectorAll("trkpt")).map(
-              (pt) => {
+
+            // Get all track segments (each <trkseg> becomes a separate line)
+            const segments = gpxDoc.querySelectorAll("trkseg");
+            segments.forEach((seg) => {
+              const segmentPoints: [number, number][] = Array.from(
+                seg.querySelectorAll("trkpt")
+              ).map((pt) => {
                 const lat = parseFloat(pt.getAttribute("lat") || "0");
                 const lon = parseFloat(pt.getAttribute("lon") || "0");
                 return [lon, lat];
+              });
+              if (segmentPoints.length > 0) {
+                trackSegments.push(segmentPoints);
               }
-            );
+            });
+
+            // Flatten for bounds calculation
+            trackPoints = trackSegments.flat();
 
             if (trackPoints.length > 0) {
               // Calculate bounds and center from GPX track
@@ -153,17 +165,17 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
         });
 
         // If we have GPX track points, add them to the map
-        if (gpxUrl && trackPoints.length > 0) {
+        if (gpxUrl && trackSegments.length > 0) {
           map.on("load", () => {
-            // Add GPX track as a line
+            // Add GPX track as a MultiLineString (handles multiple segments)
             map.addSource("gpx-track", {
               type: "geojson",
               data: {
                 type: "Feature",
                 properties: {},
                 geometry: {
-                  type: "LineString",
-                  coordinates: trackPoints,
+                  type: "MultiLineString",
+                  coordinates: trackSegments,
                 },
               },
             });
@@ -185,8 +197,8 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
 
             // Add directional chevrons along the track
             const chevronSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
-              <path d="M2 1 L6 6 L2 11" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M6 1 L10 6 L6 11" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M2 1 L6 6 L2 11" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M6 1 L10 6 L6 11" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>`;
             const chevronImg = new Image(12, 12);
             chevronImg.onload = () => {
@@ -197,9 +209,9 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
                 source: "gpx-track",
                 layout: {
                   "symbol-placement": "line",
-                  "symbol-spacing": 10,
+                  "symbol-spacing": 20,
                   "icon-image": "direction-chevrons",
-                  "icon-size": 0.75,
+                  "icon-size": 0.5,
                   "icon-allow-overlap": true,
                   "icon-rotation-alignment": "map",
                 },
