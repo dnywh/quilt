@@ -1,5 +1,32 @@
 [
   {
+    "name": "Bánh Mì Cô Bê",
+    "date": "2026-01-17",
+    "tags": ["packaging", "food"],
+    "images": ["da-nang-banh-mi-front.webp", "da-nang-banh-mi-back.webp"],
+    "hasTransparency": true,
+    "location": "Da Nang",
+    "country": "Vietnam"
+  },
+  {
+    "name": "Peel Here",
+    "date": "2026-01-05",
+    "tags": ["sticker", "bag", "tag"],
+    "images": ["scoot-peel-here.webp"],
+    "hasTransparency": true,
+    "venue": "Changi Airport",
+    "country": "Singapore"
+  },
+  {
+    "name": "On Top of Australia",
+    "date": "2026-01-05",
+    "tags": ["sticker"],
+    "images": ["cape-york-peninsula.webp"],
+    "hasTransparency": true,
+    "location": "Cooktown, QLD",
+    "country": "Australia"
+  },
+  {
     "name": "Happy Birthday Danny",
     "date": "2025-11-23",
     "tags": ["card", "note", "handwritten", "birthday"],
@@ -966,7 +993,7 @@
     "tags": ["ticket"],
     "images": ["please-retain"],
     "venue": "The Fat Parcel",
-    "location": "Eugowra⁩, NSW",
+    "location": "Eugowra, NSW",
     "country": "Australia"
   },
   {
