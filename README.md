@@ -1,3 +1,32 @@
+# Quilt
+
+1. Clone the repository or download the files
+2. Install dependencies:
+
+    ```bash
+    npm install
+    ```
+
+3. Set up your environment variables:
+    Copy the example `.env.example` file to a new `.env` file:
+
+    ```bash
+    cp .env.example .env
+    ```
+
+4. Open the `.env` file and add your Cloudinary and MapTiler keys:
+
+    ```text
+    PUBLIC_MAPTILER_API_KEY=
+    PUBLIC_CLOUDINARY_CLOUD_NAME=
+    ```
+
+5. Start your development server:
+
+    ```bash
+    npm run dev
+    ```
+
 # Astro Starter Kit: Basics
 
 ```sh
