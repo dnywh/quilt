@@ -1,0 +1,108 @@
+---
+layout: ../../layouts/MarkdownPostLayout.astro
+title: shrinkvid.zsh
+date: 2026-02-02
+description: Batch shrink videos with ffmpeg
+tags:
+  - gist
+  - bash
+  - zsh
+---
+
+```sh
+# shrinkvid - batch shrink videos with ffmpeg
+# --------------------------------------------
+# Usage:
+#   shrinkvid [directory] [format] [crf] [scale_pct]
+#
+# Examples:
+#   shrinkvid                 # defaults: ~/Downloads, mp4, CRF=25
+#   shrinkvid . mp4 25 50     # 50% size
+#   shrinkvid ~/Movies        # custom directory
+#   shrinkvid . mkv 24        # current dir, mkv files, CRF=24
+#
+# Notes:
+# - Originals are renamed with `_Original` suffix.
+# - Skips files already ending in `_Original`.
+# - Does not overwrite existing `_Original` files.
+#
+# Important:
+# - libx264 commonly requires width/height divisible by 2 (e.g. yuv420p).
+#   Some inputs (or scaled results) can end up odd-sized, e.g. 1728x1117.
+#   This function forces the final dimensions to be even by rounding DOWN
+#   to the nearest multiple of 2 (changes at most 1px in each dimension).
+
+shrinkvid() {
+  emulate -L zsh
+  set -o pipefail
+  setopt null_glob
+
+  local dir="${1:-$HOME/Downloads}"
+  local fmt="${2:-mp4}"
+  local crf="${3:-25}" # 28 is very aggressive, 23 is almost visually the same as input
+  local scale_pct="${4:-}"
+
+  # Video filter:
+  # - If scale_pct is provided, scale by that percentage.
+  # - Always ensure the output width/height are even numbers by truncating down:
+  #     trunc(x/2)*2  -> nearest even <= x
+  #
+  # This avoids: "height not divisible by 2" and similar libx264 encoder errors.
+  local vf=""
+  if [[ -n "$scale_pct" ]]; then
+    # Scale *then* coerce to even dimensions (rounding down).
+    vf="-vf scale=trunc(iw*${scale_pct}/100/2)*2:trunc(ih*${scale_pct}/100/2)*2"
+  else
+    # No scaling requested, but still coerce to even dimensions if needed.
+    # If input is already even-sized, this is a no-op.
+    vf="-vf scale=trunc(iw/2)*2:trunc(ih/2)*2"
+  fi
+
+  builtin pushd -q "$dir" || { echo "Directory not found: $dir"; return 1; }
+
+  for i in *.${fmt}; do
+    [[ "$i" == *_Original.${fmt} ]] && continue
+    local original="${i%.*}_Original.${fmt}"
+    mv -n -- "$i" "$original" || { echo "Skipping $i (backup exists)"; continue; }
+
+    echo "Shrinking $i (CRF=$crf${scale_pct:+, scale=${scale_pct}%})..."
+    echo "  Applying filter: ${vf#-vf }"
+    echo "  Output dims will be forced to even numbers (rounded down if needed)."
+
+    ffmpeg -y -i "$original" \
+      -c:v libx264 -preset slow -crf "$crf" \
+      ${=vf} \
+      -c:a copy \
+      "$i"
+  done
+
+  popd -q
+}
+```
+## Update your Zsh setup
+1.	Open your Zsh config:
+
+    ```sh
+      nano ~/.zshrc
+    ```
+
+    or using your favourite text editor:
+
+    ```sh
+      code ~/.zshrc
+    ```
+
+2.	Paste the updated shrinkvid() function (replace your existing one).
+
+3. Reload your shell config:
+
+    ```sh
+    source ~/.zshrc
+    ```
+
+4. Verify:
+
+    ```sh
+    type shrinkvid
+    shrinkvid --help 2>/dev/null || true
+    ```

@@ -1,5 +1,12 @@
 [
   {
+    "title": "First, Make Me Care",
+    "date": "2026-02-02",
+    "quote": "When writing, your first job is this: First, make me care.",
+    "url": "https://gwern.net/blog/2026/make-me-care",
+    "tags": ["writing"]
+  },
+  {
     "title": "Backseat Software",
     "date": "2026-01-30",
     "quote": "When experimentation becomes the primary decision-making tool, a strong product vision becomes optional.",
