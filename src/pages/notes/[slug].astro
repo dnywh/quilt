@@ -3,6 +3,7 @@ import { getCollection, render } from "astro:content";
 import Layout from "../../layouts/BaseLayout.astro";
 import MapViewer from "../../components/MapViewer.astro";
 import SoundscapePlayer from "../../components/SoundscapePlayer.astro";
+import CodeBlock from "../../components/CodeBlock.astro";
 export async function getStaticPaths() {
   const notes = await getCollection("notes");
   return notes.map((note) => ({
@@ -41,7 +42,7 @@ const pageTitle = note.data.title;
     }
 
     <!-- Render the content with these custom components available inline within the note without imports -->
-    <Content components={{ MapViewer, SoundscapePlayer }} />
+    <Content components={{ pre: CodeBlock, MapViewer, SoundscapePlayer }} />
   </article>
 </Layout>
 

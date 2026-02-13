@@ -1,0 +1,59 @@
+---
+/**
+ * Wraps MDX code blocks and adds a "Copy" button.
+ * Pass as the `pre` component to <Content components={{ pre: CodeBlock }} />.
+ */
+---
+
+<div class="code-block-wrapper">
+  <pre><slot /></pre>
+  <button type="button" class="code-block-copy" aria-label="Copy code"
+    >Copy</button
+  >
+</div>
+
+<script>
+  function initCopyButtons() {
+    document.querySelectorAll(".code-block-wrapper").forEach((wrapper) => {
+      const btn = wrapper.querySelector(".code-block-copy");
+      const code = wrapper.querySelector("code");
+      if (!btn || !code) return;
+      if (btn.dataset.initialized) return;
+      btn.dataset.initialized = "true";
+
+      btn.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(code.textContent ?? "");
+          const label = btn.getAttribute("aria-label");
+          btn.textContent = "Copied";
+          btn.setAttribute("aria-label", "Copied");
+          setTimeout(() => {
+            btn.textContent = "Copy";
+            if (label) btn.setAttribute("aria-label", label);
+          }, 2000);
+        } catch {
+          btn.textContent = "Copy failed";
+          setTimeout(() => (btn.textContent = "Copy"), 2000);
+        }
+      });
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initCopyButtons);
+  } else {
+    initCopyButtons();
+  }
+</script>
+
+<style>
+  .code-block-wrapper {
+    position: relative;
+  }
+
+  .code-block-copy {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+  }
+</style>

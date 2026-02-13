@@ -1,0 +1,124 @@
+---
+layout: ../../layouts/MarkdownPostLayout.astro
+title: Colour Table
+date: 2026-02-06
+description: Make a Postgres table with a bunch of mock data
+tags:
+  - gist
+  - postgres
+  - databases
+---
+
+U.S. spelling for all you otherwise-confused Americans.
+
+```sql
+-- colors seed table (Postgres / Supabase)
+-- Creates a reusable `public.colors` table and inserts a basic palette.
+-- Safe to re-run: uses IF NOT EXISTS and ON CONFLICT.
+
+BEGIN;
+
+CREATE TABLE IF NOT EXISTS public.colors (
+  id           bigserial PRIMARY KEY,
+  name         text        NOT NULL,
+  slug         text        NOT NULL,
+  hex          char(7)     NOT NULL, -- e.g. '#1a2b3c'
+  rgb          int[]       NOT NULL, -- e.g. '{26,43,60}'
+  is_named     boolean     NOT NULL DEFAULT true,
+  created_at   timestamptz NOT NULL DEFAULT now(),
+  updated_at   timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT colors_hex_format CHECK (hex ~* '^#[0-9a-f]{6}$'),
+  CONSTRAINT colors_rgb_len CHECK (array_length(rgb, 1) = 3),
+  CONSTRAINT colors_rgb_range CHECK (
+    rgb[1] BETWEEN 0 AND 255 AND
+    rgb[2] BETWEEN 0 AND 255 AND
+    rgb[3] BETWEEN 0 AND 255
+  ),
+  CONSTRAINT colors_slug_unique UNIQUE (slug),
+  CONSTRAINT colors_hex_unique UNIQUE (hex)
+);
+
+-- Optional: keep updated_at fresh on updates (works in plain Postgres).
+-- In Supabase, this is fine too. Comment out if you don't want triggers.
+CREATE OR REPLACE FUNCTION public.set_updated_at()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_trigger
+    WHERE tgname = 'trg_colors_set_updated_at'
+  ) THEN
+    CREATE TRIGGER trg_colors_set_updated_at
+    BEFORE UPDATE ON public.colors
+    FOR EACH ROW
+    EXECUTE FUNCTION public.set_updated_at();
+  END IF;
+END
+$$;
+
+-- Seed data
+INSERT INTO public.colors (name, slug, hex, rgb, is_named) VALUES
+  ('Black',        'black',        '#000000', ARRAY[0,0,0], true),
+  ('White',        'white',        '#FFFFFF', ARRAY[255,255,255], true),
+
+  ('Red',          'red',          '#FF0000', ARRAY[255,0,0], true),
+  ('Green',        'green',        '#00FF00', ARRAY[0,255,0], true),
+  ('Blue',         'blue',         '#0000FF', ARRAY[0,0,255], true),
+
+  ('Cyan',         'cyan',         '#00FFFF', ARRAY[0,255,255], true),
+  ('Magenta',      'magenta',      '#FF00FF', ARRAY[255,0,255], true),
+  ('Yellow',       'yellow',       '#FFFF00', ARRAY[255,255,0], true),
+
+  ('Orange',       'orange',       '#FFA500', ARRAY[255,165,0], true),
+  ('Purple',       'purple',       '#800080', ARRAY[128,0,128], true),
+  ('Pink',         'pink',         '#FFC0CB', ARRAY[255,192,203], true),
+  ('Brown',        'brown',        '#A52A2A', ARRAY[165,42,42], true),
+
+  ('Slate 50',     'slate-50',     '#F8FAFC', ARRAY[248,250,252], true),
+  ('Slate 200',    'slate-200',    '#E2E8F0', ARRAY[226,232,240], true),
+  ('Slate 500',    'slate-500',    '#64748B', ARRAY[100,116,139], true),
+  ('Slate 900',    'slate-900',    '#0F172A', ARRAY[15,23,42], true),
+
+  ('Sky 300',      'sky-300',      '#7DD3FC', ARRAY[125,211,252], true),
+  ('Sky 500',      'sky-500',      '#0EA5E9', ARRAY[14,165,233], true),
+  ('Indigo 500',   'indigo-500',   '#6366F1', ARRAY[99,102,241], true),
+  ('Violet 600',   'violet-600',   '#7C3AED', ARRAY[124,58,237], true),
+
+  ('Emerald 400',  'emerald-400',  '#34D399', ARRAY[52,211,153], true),
+  ('Emerald 600',  'emerald-600',  '#059669', ARRAY[5,150,105], true),
+  ('Teal 500',     'teal-500',     '#14B8A6', ARRAY[20,184,166], true),
+
+  ('Amber 300',    'amber-300',    '#FCD34D', ARRAY[252,211,77], true),
+  ('Amber 500',    'amber-500',    '#F59E0B', ARRAY[245,158,11], true),
+  ('Rose 500',     'rose-500',     '#F43F5E', ARRAY[244,63,94], true),
+  ('Rose 700',     'rose-700',     '#BE123C', ARRAY[190,18,60], true),
+
+  ('Midnight',     'midnight',     '#0B1026', ARRAY[11,16,38], false),
+  ('Steel',        'steel',        '#3A4A5E', ARRAY[58,74,94], false),
+  ('Sand',         'sand',         '#D8C3A5', ARRAY[216,195,165], false),
+  ('Forest',       'forest',       '#0B3D2E', ARRAY[11,61,46], false),
+  ('Ocean',        'ocean',        '#005377', ARRAY[0,83,119], false),
+  ('Lavender',     'lavender',     '#B8A1FF', ARRAY[184,161,255], false),
+  ('Coral',        'coral',        '#FF6B6B', ARRAY[255,107,107], false)
+ON CONFLICT (slug) DO UPDATE
+SET
+  name     = EXCLUDED.name,
+  hex      = EXCLUDED.hex,
+  rgb      = EXCLUDED.rgb,
+  is_named = EXCLUDED.is_named;
+
+COMMIT;
+
+-- Example usage:
+-- SELECT * FROM public.colors ORDER BY name;
+-- SELECT * FROM public.colors WHERE hex = '#0EA5E9';
+```
