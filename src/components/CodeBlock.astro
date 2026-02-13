@@ -2,20 +2,25 @@
 /**
  * Wraps MDX code blocks and adds a "Copy" button.
  * Pass as the `pre` component to <Content components={{ pre: CodeBlock }} />.
+ * Forwards the original pre's attributes (e.g. Shiki's class) so syntax highlighting styles are preserved.
  */
+const { class: classProp, className, ...rest } = Astro.props;
+const preClass = classProp ?? className;
 ---
 
 <div class="code-block-wrapper">
-  <pre><slot /></pre>
   <button type="button" class="code-block-copy" aria-label="Copy code"
     >Copy</button
   >
+  <pre class={preClass} {...rest}><slot /></pre>
 </div>
 
 <script>
   function initCopyButtons() {
     document.querySelectorAll(".code-block-wrapper").forEach((wrapper) => {
-      const btn = wrapper.querySelector(".code-block-copy");
+      const btn = wrapper.querySelector(
+        ".code-block-copy",
+      ) as HTMLButtonElement | null;
       const code = wrapper.querySelector("code");
       if (!btn || !code) return;
       if (btn.dataset.initialized) return;
@@ -45,15 +50,3 @@
     initCopyButtons();
   }
 </script>
-
-<style>
-  .code-block-wrapper {
-    position: relative;
-  }
-
-  .code-block-copy {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-  }
-</style>
