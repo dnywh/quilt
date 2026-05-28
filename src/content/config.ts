@@ -3,6 +3,7 @@ import { glob } from "astro/loaders";
 import troveData from "./trove/trove.json";
 import soundscapesData from "./soundscapes/soundscapes.json";
 import ephemeraData from "./ephemera/ephemera.json";
+import photosData from "./photos/photos.json";
 
 // Notes (MDX blog posts with inline components)
 const notesCollection = defineCollection({
@@ -65,6 +66,38 @@ const soundscapesCollection = defineCollection({
   }),
 });
 
+// Photos
+const photosCollection = defineCollection({
+  loader: async () => {
+    return (photosData as Array<Record<string, unknown>>).map((entry) => ({
+      id: entry.id as string,
+      title: entry.title as string,
+      date: entry.date as string,
+      images: entry.images as Array<Record<string, unknown>>,
+      caption: entry.caption as string | undefined,
+      location: entry.location as string | undefined,
+      tags: entry.tags as string[] | undefined,
+    }));
+  },
+  schema: z.object({
+    title: z.string(),
+    date: z.coerce.date(),
+    images: z
+      .array(
+        z.object({
+          src: z.string(),
+          width: z.number().positive(),
+          height: z.number().positive(),
+          alt: z.string(),
+        })
+      )
+      .min(1),
+    caption: z.string().optional(),
+    location: z.string().optional(),
+    tags: z.array(z.string()).optional(),
+  }),
+});
+
 // Ephemera
 // Data is pre-transformed: tags are arrays, images combined into single array
 // First image is the ID, second is back (2 images) or inside (3 images), third is back
@@ -105,6 +138,7 @@ const ephemeraCollection = defineCollection({
 export const collections = {
   trove: troveCollection,
   ephemera: ephemeraCollection,
+  photos: photosCollection,
   soundscapes: soundscapesCollection,
   notes: notesCollection,
 };

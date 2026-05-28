@@ -12,7 +12,11 @@ import R2Image from "./R2Image.astro";
 const trove = await getCollection("trove");
 const notes = await getCollection("notes");
 const ephemera = await getCollection("ephemera");
+const photos = await getCollection("photos");
 const latestEphemera = ephemera
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+  .slice(0, 2);
+const latestPhotos = photos
   .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
   .slice(0, 2);
 ---
@@ -26,14 +30,26 @@ const latestEphemera = ephemera
 
   <ReggiePromo />
 
-  <section>
-    <R2Image
-      src="img/waratah-mosaic.jpg"
-      width={200}
-      height={200}
-      alt="A mosaic that looks like a waratah"
-    />
-  </section>
+  {
+    latestPhotos.map((photo) => {
+      const image = photo.data.images[0];
+      const caption = photo.data.caption || photo.data.title;
+
+      return (
+        <section class="photo-tile">
+          <R2Image
+            src={image.src}
+            width={image.width}
+            height={image.height}
+            alt={image.alt}
+            fit="cover"
+            sizes="(max-width: 700px) 100vw, 20vw"
+          />
+          {caption && <p>{caption}</p>}
+        </section>
+      );
+    })
+  }
 
   <section>
     <h2>Notes</h2>
@@ -121,6 +137,17 @@ const latestEphemera = ephemera
   h1 {
     font-size: 22px;
     margin-top: 0.25em;
+  }
+
+  .photo-tile {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .photo-tile p {
+    margin: 0;
+    color: #666;
+    font-size: 0.875rem;
   }
 
   #links {

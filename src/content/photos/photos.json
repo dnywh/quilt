@@ -1,0 +1,33 @@
+[
+  {
+    "id": "mosaic-bench",
+    "title": "Mosaic Bench",
+    "date": "2026-05-27",
+    "images": [
+      {
+        "src": "photos/2026/2026-05-27-mosaic-bench.jpg",
+        "width": 3024,
+        "height": 4032,
+        "alt": "A bench made of mosaic tiles"
+      }
+    ],
+    "location": "Guadalajara, Jalisco",
+    "tags": ["mosiac", "bench"]
+  },
+  {
+    "id": "tram-stop",
+    "title": "Tram Stop",
+    "date": "2026-05-26",
+    "images": [
+      {
+        "src": "photos/2026/2026-05-26-tram-stop.jpg",
+        "width": 3024,
+        "height": 4032,
+        "alt": "A sign, a basketball hoop, and a plane on the descent"
+      }
+    ],
+    "caption": "LAX",
+    "location": "Los Angeles, CA",
+    "tags": ["cityscape", "basketball"]
+  }
+]

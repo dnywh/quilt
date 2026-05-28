@@ -1,0 +1,98 @@
+---
+import { getCollection } from "astro:content";
+import Layout from "../../layouts/BaseLayout.astro";
+import R2Image from "../../components/R2Image.astro";
+
+const pageTitle = "Photos";
+const photos = await getCollection("photos");
+const sortedPhotos = photos.sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime()
+);
+---
+
+<Layout title={pageTitle}>
+  <main class="photos-page">
+    <header class="photos-header">
+      <h1>{pageTitle}</h1>
+    </header>
+
+    <section class="photos-feed">
+      {
+        sortedPhotos.map((photo) => {
+          const image = photo.data.images[0];
+
+          return (
+            <article class="photo-entry">
+              <R2Image
+                src={image.src}
+                width={image.width}
+                height={image.height}
+                alt={image.alt}
+                fit="scale-down"
+                sizes="(max-width: 760px) 100vw, 760px"
+              />
+              <div class="photo-meta">
+                <h2>{photo.data.title}</h2>
+                <time datetime={photo.data.date.toISOString()}>
+                  {photo.data.date.toLocaleDateString("en-AU", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </time>
+                {photo.data.caption && <p>{photo.data.caption}</p>}
+                {photo.data.location && <p>{photo.data.location}</p>}
+              </div>
+            </article>
+          );
+        })
+      }
+    </section>
+  </main>
+</Layout>
+
+<style>
+  .photos-page {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 2rem 1rem 4rem;
+  }
+
+  .photos-header {
+    margin-bottom: 2rem;
+  }
+
+  .photos-header h1 {
+    margin: 0;
+  }
+
+  .photos-feed {
+    display: grid;
+    gap: 3rem;
+  }
+
+  .photo-entry {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .photo-meta {
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  .photo-meta h2,
+  .photo-meta p {
+    margin: 0;
+  }
+
+  .photo-meta h2 {
+    font-size: 1rem;
+  }
+
+  .photo-meta time,
+  .photo-meta p {
+    color: #666;
+    font-size: 0.9375rem;
+  }
+</style>
