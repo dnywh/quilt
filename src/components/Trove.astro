@@ -13,6 +13,13 @@ const trove = await getCollection("trove");
           <a href={entry.data.url} target="_blank" rel="noopener noreferrer">
             {entry.data.title}
           </a>
+          {entry.data.images && entry.data.images.length > 0 && (
+            <div class="trove-images">
+              {entry.data.images.map((image) => (
+                <img src={image} alt="" loading="lazy" decoding="async" />
+              ))}
+            </div>
+          )}
           {entry.data.description && <p>{entry.data.description}</p>}
           {entry.data.tags && entry.data.tags.length > 0 && (
             <div>
@@ -26,3 +33,18 @@ const trove = await getCollection("trove");
     }
   </ul>
 </section>
+
+<style>
+  .trove-images {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    overflow-x: auto;
+  }
+
+  .trove-images img {
+    width: min(12rem, 45vw);
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+  }
+</style>

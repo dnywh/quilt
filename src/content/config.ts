@@ -26,6 +26,7 @@ const troveCollection = defineCollection({
         title: entry.title as string,
         url: entry.url as string,
         description: entry.description as string | undefined,
+        images: entry.images as string[] | undefined,
         tags: entry.tags as string[] | undefined,
       })
     );
@@ -34,6 +35,7 @@ const troveCollection = defineCollection({
     title: z.string(),
     url: z.string().url(),
     description: z.string().optional(),
+    images: z.array(z.string().url()).optional(),
     tags: z.array(z.string()).optional(),
   }),
 });

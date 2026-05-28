@@ -1,5 +1,30 @@
 [
   {
+    "title": "Tenfold",
+    "date": "2026-05-28",
+    "quote": "Tenfold started where my work usually does: with a love of pattern, tools, and the kind of experience that puts you in front of an object and makes you want to know how it works.",
+    "url": "https://www.inkandswitch.com/project/tenfold/story/",
+    "source": "Ink & Switch",
+    "images": [
+      "https://www.inkandswitch.com/project/tenfold/story/star-wars--e4--targeting.webp",
+      "https://www.inkandswitch.com/project/tenfold/playground/playground.png"
+    ],
+    "tags": ["generative", "technology"]
+  },
+  {
+    "title": "Aldous Huxley Archive",
+    "date": "2026-05-17",
+    "url": "https://huxleyarchive.org/Fiction/ENGLISH.html",
+    "tags": ["books", "resource"]
+  },
+  {
+    "title": "Code as a Tool of Process",
+    "date": "2026-03-24",
+    "quote": "Programming, like writing, is an activity, where one iteratively sharpens what they're doing as they do it.",
+    "url": "https://blog.jim-nielsen.com/2026/code-as-process/",
+    "tags": ["automation", "building", "technology"]
+  },
+  {
     "title": "First, Make Me Care",
     "date": "2026-02-02",
     "quote": "When writing, your first job is this: First, make me care.",
