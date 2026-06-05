@@ -1,5 +1,19 @@
 [
   {
+    "title": "Ian's Shoelace Site",
+    "date": "2026-05-29",
+    "url": "https://www.fieggen.com/shoelace/index.htm",
+    "tags": ["wholesome"]
+  },
+  {
+    "title": "Dickbars",
+    "date": "2026-05-29",
+    "quote": "Dickovers are a veritable scourge. They’re so common they’re effectively part of the firmament.",
+    "url": "https://daringfireball.net/2026/05/what_is_a_dickover",
+    "source": "Daring Fireball",
+    "tags": ["df", "web"]
+  },
+  {
     "title": "Tenfold",
     "date": "2026-05-28",
     "quote": "Tenfold started where my work usually does: with a love of pattern, tools, and the kind of experience that puts you in front of an object and makes you want to know how it works.",
