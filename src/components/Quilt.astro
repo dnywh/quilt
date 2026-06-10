@@ -1,6 +1,5 @@
 ---
 import MapViewer from "./MapViewer.astro";
-import { CldImage } from "astro-cloudinary";
 import PeelsPromo from "./PeelsPromo.astro";
 import ReggiePromo from "./ReggiePromo.astro";
 import EphemeraTile from "./EphemeraTile.astro";
@@ -19,6 +18,10 @@ const latestEphemera = ephemera
 const latestPhotos = photos
   .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
   .slice(0, 2);
+const cloudinaryCloudName = import.meta.env.PUBLIC_CLOUDINARY_CLOUD_NAME;
+const artistsCascadesUrl = cloudinaryCloudName
+  ? `https://res.cloudinary.com/${cloudinaryCloudName}/image/upload/c_fill,w_400,h_280/images/artists-cascades`
+  : undefined;
 ---
 
 <main>
@@ -77,12 +80,18 @@ const latestPhotos = photos
   }
 
   <section>
-    <CldImage
-      src="images/artists-cascades"
-      width={400}
-      height={280}
-      alt="A flowing waterfall at Artists Cascades"
-    />
+    {
+      artistsCascadesUrl && (
+        <img
+          src={artistsCascadesUrl}
+          width={400}
+          height={280}
+          alt="A flowing waterfall at Artists Cascades"
+          loading="lazy"
+          decoding="async"
+        />
+      )
+    }
   </section>
 
   <section>
