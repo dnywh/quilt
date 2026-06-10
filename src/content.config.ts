@@ -1,9 +1,9 @@
 import { defineCollection, z } from "astro:content";
 import { glob } from "astro/loaders";
-import troveData from "./trove/trove.json";
-import soundscapesData from "./soundscapes/soundscapes.json";
-import ephemeraData from "./ephemera/ephemera.json";
-import photosData from "./photos/photos.json";
+import troveData from "./content/trove/trove.json";
+import soundscapesData from "./content/soundscapes/soundscapes.json";
+import ephemeraData from "./content/ephemera/ephemera.json";
+import photosData from "./content/photos/photos.json";
 
 // Notes (MDX blog posts with inline components)
 const notesCollection = defineCollection({
