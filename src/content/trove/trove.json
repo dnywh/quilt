@@ -1,5 +1,33 @@
 [
   {
+    "title": "A love story",
+    "date": "2026-06-10",
+    "url": "https://pudding.cool/2026/06/love-story/",
+    "tags": ["data-vis", "pudding", "relationships"]
+  },
+  {
+    "title": "gentleos32",
+    "date": "2026-06-09",
+    "url": "https://github.com/luke8086/gentleos32",
+    "images": [
+      "https://github.com/luke8086/gentleos32/raw/main/doc/machimg/t1900c.webp",
+      "https://github.com/luke8086/gentleos32/raw/main/doc/machimg/t1800.webp"
+    ],
+    "tags": ["technology"]
+  },
+  {
+    "title": "365",
+    "date": "2026-06-02",
+    "url": "https://notes.art/one-year-later/"
+  },
+  {
+    "title": "The paper computer",
+    "date": "2026-05-31",
+    "quote": "Now that we have actually good AI, I have this vision of a form of computing that doesn't involve me using a computer so much.",
+    "url": "https://jsomers.net/blog/the-paper-computer",
+    "source": "jsomers.net"
+  },
+  {
     "title": "Ian's Shoelace Site",
     "date": "2026-05-29",
     "url": "https://www.fieggen.com/shoelace/index.htm",

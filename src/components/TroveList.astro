@@ -1,0 +1,133 @@
+---
+import type { CollectionEntry } from "astro:content";
+
+interface Props {
+  entries: CollectionEntry<"trove">[];
+}
+
+const { entries } = Astro.props;
+---
+
+<ul class="trove-list">
+  {
+    entries.map((entry) => (
+      <li class="trove-item">
+        <a
+          class="trove-title"
+          href={entry.data.url}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {entry.data.title}
+        </a>
+        <time class="trove-date" datetime={entry.data.date.toISOString()}>
+          {entry.data.date.toLocaleDateString("en-AU", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })}
+        </time>
+        {entry.data.source && (
+          <p class="trove-source">{entry.data.source}</p>
+        )}
+        {entry.data.quote && <blockquote class="trove-quote">{entry.data.quote}</blockquote>}
+        {entry.data.description && (
+          <p class="trove-description">{entry.data.description}</p>
+        )}
+        {entry.data.images && entry.data.images.length > 0 && (
+          <div class="trove-images">
+            {entry.data.images.map((image) => (
+              <img src={image} alt="" loading="lazy" decoding="async" />
+            ))}
+          </div>
+        )}
+        {entry.data.tags && entry.data.tags.length > 0 && (
+          <div class="trove-tags">
+            {entry.data.tags.map((tag) => (
+              <span>{tag}</span>
+            ))}
+          </div>
+        )}
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .trove-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .trove-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .trove-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #111827;
+    text-decoration: none;
+  }
+
+  .trove-title:hover {
+    color: #4b5563;
+  }
+
+  .trove-date {
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+
+  .trove-source {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+
+  .trove-quote {
+    margin: 0;
+    padding-left: 1rem;
+    border-left: 3px solid #e5e7eb;
+    color: #374151;
+    font-style: italic;
+  }
+
+  .trove-description {
+    margin: 0;
+    color: #4b5563;
+  }
+
+  .trove-images {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+  }
+
+  .trove-images img {
+    width: min(12rem, 100%);
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: 4px;
+  }
+
+  .trove-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+  }
+
+  .trove-tags span {
+    font-size: 0.75rem;
+    color: #6b7280;
+    background: #f3f4f6;
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+  }
+</style>

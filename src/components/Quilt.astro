@@ -8,7 +8,6 @@ import SoundscapePlayer from "./SoundscapePlayer.astro";
 import { getCollection } from "astro:content";
 import R2Image from "./R2Image.astro";
 
-const trove = await getCollection("trove");
 const notes = await getCollection("notes");
 const ephemera = await getCollection("ephemera");
 const photos = await getCollection("photos");
@@ -96,22 +95,6 @@ const artistsCascadesUrl = cloudinaryCloudName
 
   <section>
     <Trove />
-  </section>
-
-  <section>
-    <h2>Trove manual array</h2>
-    <ul>
-      {
-        trove.map((entry: any) => (
-          <li>
-            <p>{entry.data.title}</p>
-            <p>{entry.data.description}</p>
-            <a href={entry.data.url}>{entry.data.url}</a>
-            <p>{entry.data.tags}</p>
-          </li>
-        ))
-      }
-    </ul>
   </section>
 
   <section>

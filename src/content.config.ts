@@ -20,22 +20,30 @@ const notesCollection = defineCollection({
 // Trove
 const troveCollection = defineCollection({
   loader: async () => {
-    // Read from a single JSON file containing an array of entries
-    return (troveData as Array<Record<string, unknown>>).map(
-      (entry, index) => ({
-        id: (entry.id as string | undefined) || `entry-${index}`,
-        title: entry.title as string,
-        url: entry.url as string,
-        description: entry.description as string | undefined,
-        images: entry.images as string[] | undefined,
-        tags: entry.tags as string[] | undefined,
-      })
+    const sortedEntries = [...(troveData as Array<Record<string, unknown>>)].sort(
+      (a, b) =>
+        new Date(b.date as string).getTime() - new Date(a.date as string).getTime()
     );
+
+    return sortedEntries.map((entry, index) => ({
+      id: (entry.id as string | undefined) || `entry-${index}`,
+      title: entry.title as string,
+      url: entry.url as string,
+      date: entry.date as string,
+      description: entry.description as string | undefined,
+      quote: entry.quote as string | undefined,
+      source: entry.source as string | undefined,
+      images: entry.images as string[] | undefined,
+      tags: entry.tags as string[] | undefined,
+    }));
   },
   schema: z.object({
     title: z.string(),
     url: z.string().url(),
+    date: z.coerce.date(),
     description: z.string().optional(),
+    quote: z.string().optional(),
+    source: z.string().optional(),
     images: z.array(z.string().url()).optional(),
     tags: z.array(z.string()).optional(),
   }),

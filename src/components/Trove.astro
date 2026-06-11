@@ -1,50 +1,29 @@
 ---
 import { getCollection } from "astro:content";
+import TroveList from "./TroveList.astro";
 
 const trove = await getCollection("trove");
+const sortedTrove = trove.sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime()
+);
 ---
 
 <section id="trove">
   <h2>Trove</h2>
-  <ul>
-    {
-      trove.map((entry) => (
-        <li>
-          <a href={entry.data.url} target="_blank" rel="noopener noreferrer">
-            {entry.data.title}
-          </a>
-          {entry.data.images && entry.data.images.length > 0 && (
-            <div class="trove-images">
-              {entry.data.images.map((image) => (
-                <img src={image} alt="" loading="lazy" decoding="async" />
-              ))}
-            </div>
-          )}
-          {entry.data.description && <p>{entry.data.description}</p>}
-          {entry.data.tags && entry.data.tags.length > 0 && (
-            <div>
-              {entry.data.tags.map((tag) => (
-                <span>{tag}</span>
-              ))}
-            </div>
-          )}
-        </li>
-      ))
-    }
-  </ul>
+  <p class="trove-intro">
+    Links worth keeping. <a href="/trove/">View all</a>
+  </p>
+  <TroveList entries={sortedTrove} />
 </section>
 
 <style>
-  .trove-images {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-    overflow-x: auto;
+  .trove-intro {
+    margin: 0 0 1.5rem;
+    color: #6b7280;
+    font-size: 0.9375rem;
   }
 
-  .trove-images img {
-    width: min(12rem, 45vw);
-    aspect-ratio: 4 / 3;
-    object-fit: cover;
+  .trove-intro a {
+    color: #111827;
   }
 </style>

@@ -1,0 +1,61 @@
+---
+import { getCollection } from "astro:content";
+import Layout from "../../layouts/BaseLayout.astro";
+import TroveList from "../../components/TroveList.astro";
+
+const pageTitle = "Trove";
+const trove = await getCollection("trove");
+const sortedTrove = trove.sort(
+    (a, b) => b.data.date.getTime() - a.data.date.getTime(),
+);
+---
+
+<Layout title={pageTitle}>
+    <main class="trove-page">
+        <header class="trove-header">
+            <h1>{pageTitle}</h1>
+            <p class="trove-description">
+                {sortedTrove.length} things (and counting) that I find interesting
+                from around the web.
+            </p>
+        </header>
+
+        <TroveList entries={sortedTrove} />
+    </main>
+</Layout>
+
+<style>
+    .trove-page {
+        max-width: 42rem;
+        margin: 0 auto;
+        padding: 2rem 1rem 4rem;
+    }
+
+    .trove-header {
+        margin-bottom: 2.5rem;
+    }
+
+    .trove-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #111827;
+        margin: 0 0 0.75rem;
+        letter-spacing: -0.02em;
+    }
+
+    .trove-description {
+        font-size: 1.125rem;
+        color: #6b7280;
+        margin: 0;
+    }
+
+    @media (max-width: 640px) {
+        .trove-page {
+            padding: 1.5rem 1rem 3rem;
+        }
+
+        .trove-header h1 {
+            font-size: 2rem;
+        }
+    }
+</style>
