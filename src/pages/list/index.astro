@@ -1,0 +1,13 @@
+---
+import Layout from "../../layouts/BaseLayout.astro";
+import ListView from "../../components/list/ListView.astro";
+import { getDatedListItems, paginateListItems } from "../../lib/list";
+
+const pageTitle = "List";
+const allItems = await getDatedListItems();
+const { items, totalPages } = paginateListItems(allItems, 1);
+---
+
+<Layout title={pageTitle}>
+  <ListView items={items} currentPage={1} totalPages={totalPages} />
+</Layout>

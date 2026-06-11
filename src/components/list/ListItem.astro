@@ -1,0 +1,234 @@
+---
+import EphemeraTile from "../EphemeraTile.astro";
+import R2Image from "../R2Image.astro";
+import SoundscapePlayer from "../SoundscapePlayer.astro";
+import TroveItem from "../TroveItem.astro";
+import { formatListDate, getNotePreview, type DatedListItem } from "../../lib/list";
+
+interface Props {
+  item: DatedListItem;
+}
+
+const { item } = Astro.props;
+
+const kindLabels: Record<DatedListItem["kind"], string> = {
+  note: "Note",
+  trove: "Trove",
+  ephemera: "Ephemera",
+  photo: "Photo",
+  soundscape: "Soundscape",
+};
+
+const notePreview =
+  item.kind === "note" ? getNotePreview(item.entry) : "";
+---
+
+<article class="list-item" data-kind={item.kind}>
+  {
+    item.kind === "note" && (
+      <a class="note-card" href={`/notes/${item.entry.id}`}>
+        <header class="note-card-header">
+          <span class="list-item-kind">{kindLabels.note}</span>
+          <time class="list-item-date" datetime={item.date.toISOString()}>
+            {formatListDate(item.date)}
+          </time>
+        </header>
+        <h2 class="note-card-title">{item.entry.data.title}</h2>
+        {notePreview && <p class="note-card-preview">{notePreview}</p>}
+      </a>
+    )
+  }
+
+  {
+    item.kind !== "note" && (
+      <>
+        <header class="list-item-header">
+          <span class="list-item-kind">{kindLabels[item.kind]}</span>
+          <time class="list-item-date" datetime={item.date.toISOString()}>
+            {formatListDate(item.date)}
+          </time>
+        </header>
+
+        {
+          item.kind === "trove" && (
+            <div class="list-item-body">
+              <ul class="trove-list-inline">
+                <TroveItem entry={item.entry} showDate={false} />
+              </ul>
+            </div>
+          )
+        }
+
+        {
+          item.kind === "ephemera" && (
+            <div class="list-item-body ephemera-card">
+              <EphemeraTile itemId={item.entry.id} showCaption={true} />
+            </div>
+          )
+        }
+
+        {
+          item.kind === "photo" && (
+            <div class="list-item-body">
+              {
+                (() => {
+                  const image = item.entry.data.images[0];
+                  return (
+                    <>
+                      <R2Image
+                        src={image.src}
+                        width={image.width}
+                        height={image.height}
+                        alt={image.alt}
+                        fit="scale-down"
+                        sizes="(max-width: 760px) 100vw, 760px"
+                      />
+                      <div class="photo-meta">
+                        <h2 class="list-item-title">{item.entry.data.title}</h2>
+                        {item.entry.data.caption && (
+                          <p class="list-item-description">{item.entry.data.caption}</p>
+                        )}
+                        {item.entry.data.location && (
+                          <p class="list-item-description">{item.entry.data.location}</p>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()
+              }
+            </div>
+          )
+        }
+
+        {
+          item.kind === "soundscape" && (
+            <div class="list-item-body">
+              <SoundscapePlayer entry={item.entry} />
+            </div>
+          )
+        }
+      </>
+    )
+  }
+</article>
+
+<style>
+  .list-item {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .list-item-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+  }
+
+  .list-item-kind {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #6b7280;
+  }
+
+  .list-item-date {
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+
+  .list-item-body {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .note-card {
+    display: grid;
+    gap: 0.75rem;
+    padding: 1.25rem 1.5rem;
+    background: #fafafa;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    text-decoration: none;
+    color: inherit;
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+
+  .note-card:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 4px 16px rgba(17, 24, 39, 0.06);
+  }
+
+  .note-card-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+  }
+
+  .note-card-title {
+    margin: 0;
+    font-size: 1.375rem;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #111827;
+  }
+
+  .note-card-preview {
+    margin: 0;
+    color: #4b5563;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+
+  .ephemera-card {
+    padding: 1rem;
+    background: #fafafa;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .ephemera-card :global(.ephemera-image-frame) {
+    height: 320px;
+    border-radius: 8px;
+  }
+
+  .ephemera-card :global(.ephemera-content p) {
+    margin: 0.5rem 0 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #111827;
+  }
+
+  .list-item-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #111827;
+    text-decoration: none;
+  }
+
+  .list-item-description {
+    margin: 0;
+    color: #4b5563;
+    font-size: 0.9375rem;
+  }
+
+  .trove-list-inline {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .photo-meta {
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  .photo-meta .list-item-title {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+</style>

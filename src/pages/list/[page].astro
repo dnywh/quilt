@@ -1,0 +1,35 @@
+---
+import Layout from "../../layouts/BaseLayout.astro";
+import ListView from "../../components/list/ListView.astro";
+import { getDatedListItems, paginateListItems } from "../../lib/list";
+
+export async function getStaticPaths() {
+  const allItems = await getDatedListItems();
+  const { totalPages } = paginateListItems(allItems, 1);
+
+  if (totalPages <= 1) return [];
+
+  return Array.from({ length: totalPages - 1 }, (_, index) => {
+    const page = index + 2;
+    const { items } = paginateListItems(allItems, page);
+
+    return {
+      params: { page: String(page) },
+      props: { items, currentPage: page, totalPages },
+    };
+  });
+}
+
+interface Props {
+  items: Awaited<ReturnType<typeof getDatedListItems>>;
+  currentPage: number;
+  totalPages: number;
+}
+
+const { items, currentPage, totalPages } = Astro.props;
+const pageTitle = currentPage > 1 ? `List — Page ${currentPage}` : "List";
+---
+
+<Layout title={pageTitle}>
+  <ListView items={items} currentPage={currentPage} totalPages={totalPages} />
+</Layout>
