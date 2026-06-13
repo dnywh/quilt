@@ -154,6 +154,20 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
         "#9900cc",
       ];
 
+      const createDotMarker = (fillColor: string, label: string) => {
+        const el = document.createElement("div");
+        el.style.width = "12px";
+        el.style.height = "12px";
+        el.style.backgroundColor = fillColor;
+        el.style.borderRadius = "50%";
+        el.style.border = "2px solid white";
+        el.style.boxShadow = "0 1px 3px rgba(0,0,0,0.3)";
+        el.setAttribute("aria-label", label);
+        el.setAttribute("title", label);
+
+        return new maplibregl.Marker({ element: el });
+      };
+
       // Initialize map - if GPX URLs are provided, fetch and parse them first
       const initializeMap = async () => {
         let initialCenter = defaultCenter;
@@ -161,8 +175,12 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
         let allTrackPoints: [number, number][] = [];
 
         // Store segments per GPX file for rendering
-        const allTracks: { segments: [number, number][][]; color: string }[] =
-          [];
+        const allTracks: {
+          segments: [number, number][][];
+          color: string;
+          start: [number, number];
+          end: [number, number];
+        }[] = [];
 
         // Load all GPX files
         for (let i = 0; i < gpxUrls.length; i++) {
@@ -191,12 +209,15 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
             });
 
             if (trackSegments.length > 0) {
+              const trackPoints = trackSegments.flat();
               allTracks.push({
                 segments: trackSegments,
                 color: trackColors[i % trackColors.length],
+                start: trackPoints[0],
+                end: trackPoints[trackPoints.length - 1],
               });
               // Add to all points for bounds calculation
-              allTrackPoints = allTrackPoints.concat(trackSegments.flat());
+              allTrackPoints = allTrackPoints.concat(trackPoints);
             }
           } catch (error) {
             console.error(`Error loading GPX file ${gpxUrls[i]}:`, error);
@@ -236,14 +257,7 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
         ) => {
           if (e.detail) {
             if (!hoverMarker) {
-              const el = document.createElement("div");
-              el.style.width = "12px";
-              el.style.height = "12px";
-              el.style.backgroundColor = "#ff0000";
-              el.style.borderRadius = "50%";
-              el.style.border = "2px solid white";
-              el.style.boxShadow = "0 1px 3px rgba(0,0,0,0.3)";
-              hoverMarker = new maplibregl.Marker({ element: el });
+              hoverMarker = createDotMarker("#ff0000", "Elevation point");
             }
             hoverMarker.setLngLat([e.detail.lon, e.detail.lat]).addTo(map);
           } else if (hoverMarker) {
@@ -311,6 +325,15 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
                 });
               };
               chevronImg.src = `data:image/svg+xml;base64,${btoa(chevronSvg)}`;
+            });
+
+            allTracks.forEach((track) => {
+              createDotMarker("#00aa44", "Trail start")
+                .setLngLat(track.start)
+                .addTo(map);
+              createDotMarker("#ff0000", "Trail end")
+                .setLngLat(track.end)
+                .addTo(map);
             });
 
             // Fit map to all GPX tracks bounds without animation
