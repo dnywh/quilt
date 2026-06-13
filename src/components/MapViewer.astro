@@ -117,6 +117,23 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
       const gpxUrlsAttr = mapContainer.getAttribute("data-gpx-urls");
       const gpxUrls: string[] = gpxUrlsAttr ? JSON.parse(gpxUrlsAttr) : [];
 
+      type TrackPoint = {
+        lon: number;
+        lat: number;
+        ele: number | null;
+      };
+
+      type TrackFeature = {
+        type: "Feature";
+        properties: {
+          gradeClass: string;
+        };
+        geometry: {
+          type: "LineString";
+          coordinates: [number, number][];
+        };
+      };
+
       // Helper function to calculate bounds from track points
       const calculateBounds = (
         trackPoints: [number, number][]
@@ -145,20 +162,20 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
         ] as [number, number];
       };
 
-      // Track colors for multiple GPX files
-      const trackColors = [
-        "#ff0000",
-        "#0066ff",
-        "#00aa44",
-        "#ff6600",
-        "#9900cc",
-      ];
-
-      const createDotMarker = (fillColor: string, label: string) => {
+      const createDotMarker = (
+        fillColor: string,
+        label: string,
+        backgroundImage?: string
+      ) => {
         const el = document.createElement("div");
         el.style.width = "12px";
         el.style.height = "12px";
         el.style.backgroundColor = fillColor;
+        if (backgroundImage) {
+          el.style.backgroundImage = backgroundImage;
+          el.style.backgroundPosition = "center";
+          el.style.backgroundSize = "4px 4px";
+        }
         el.style.borderRadius = "50%";
         el.style.border = "2px solid white";
         el.style.boxShadow = "0 1px 3px rgba(0,0,0,0.3)";
@@ -166,6 +183,99 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
         el.setAttribute("title", label);
 
         return new maplibregl.Marker({ element: el });
+      };
+
+      function haversineDistance(
+        lat1: number,
+        lon1: number,
+        lat2: number,
+        lon2: number
+      ): number {
+        const R = 6371000;
+        const phi1 = (lat1 * Math.PI) / 180;
+        const phi2 = (lat2 * Math.PI) / 180;
+        const deltaPhi = ((lat2 - lat1) * Math.PI) / 180;
+        const deltaLambda = ((lon2 - lon1) * Math.PI) / 180;
+
+        const a =
+          Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+          Math.cos(phi1) *
+            Math.cos(phi2) *
+            Math.sin(deltaLambda / 2) *
+            Math.sin(deltaLambda / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return R * c;
+      }
+
+      const getGradeClass = (
+        startEle: number | null,
+        endEle: number | null,
+        distance: number
+      ) => {
+        if (startEle === null || endEle === null || distance <= 0) {
+          return "down-flat";
+        }
+
+        const grade = ((endEle - startEle) / distance) * 100;
+
+        if (grade <= 1) return "down-flat";
+        if (grade <= 3) return "gentle";
+        if (grade <= 7) return "moderate";
+        if (grade <= 12) return "hard";
+        return "steep";
+      };
+
+      const createGradeFeatures = (
+        segmentPoints: TrackPoint[],
+        targetChunkDistance = 300
+      ) => {
+        const features: TrackFeature[] = [];
+        if (segmentPoints.length < 2) return features;
+
+        let chunkCoordinates: [number, number][] = [
+          [segmentPoints[0].lon, segmentPoints[0].lat],
+        ];
+        let chunkStart = segmentPoints[0];
+        let chunkDistance = 0;
+
+        for (let i = 1; i < segmentPoints.length; i++) {
+          const previous = segmentPoints[i - 1];
+          const current = segmentPoints[i];
+          const distance = haversineDistance(
+            previous.lat,
+            previous.lon,
+            current.lat,
+            current.lon
+          );
+
+          chunkDistance += distance;
+          chunkCoordinates.push([current.lon, current.lat]);
+
+          const isLastPoint = i === segmentPoints.length - 1;
+          if (chunkDistance >= targetChunkDistance || isLastPoint) {
+            features.push({
+              type: "Feature",
+              properties: {
+                gradeClass: getGradeClass(
+                  chunkStart.ele,
+                  current.ele,
+                  chunkDistance
+                ),
+              },
+              geometry: {
+                type: "LineString",
+                coordinates: chunkCoordinates,
+              },
+            });
+
+            chunkStart = current;
+            chunkDistance = 0;
+            chunkCoordinates = [[current.lon, current.lat]];
+          }
+        }
+
+        return features;
       };
 
       // Initialize map - if GPX URLs are provided, fetch and parse them first
@@ -176,8 +286,8 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
 
         // Store segments per GPX file for rendering
         const allTracks: {
-          segments: [number, number][][];
-          color: string;
+          segments: TrackPoint[][];
+          gradeFeatures: TrackFeature[];
           start: [number, number];
           end: [number, number];
         }[] = [];
@@ -193,15 +303,23 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
             const gpxDoc = parser.parseFromString(gpxText, "text/xml");
 
             // Get all track segments (each <trkseg> becomes a separate line)
-            const trackSegments: [number, number][][] = [];
+            const trackSegments: TrackPoint[][] = [];
             const segments = gpxDoc.querySelectorAll("trkseg");
             segments.forEach((seg) => {
-              const segmentPoints: [number, number][] = Array.from(
+              const segmentPoints: TrackPoint[] = Array.from(
                 seg.querySelectorAll("trkpt")
               ).map((pt) => {
                 const lat = parseFloat(pt.getAttribute("lat") || "0");
                 const lon = parseFloat(pt.getAttribute("lon") || "0");
-                return [lon, lat];
+                const eleNode = pt.querySelector("ele");
+                const ele = eleNode
+                  ? parseFloat(eleNode.textContent || "")
+                  : NaN;
+                return {
+                  lon,
+                  lat,
+                  ele: Number.isFinite(ele) ? ele : null,
+                };
               });
               if (segmentPoints.length > 0) {
                 trackSegments.push(segmentPoints);
@@ -210,14 +328,23 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
 
             if (trackSegments.length > 0) {
               const trackPoints = trackSegments.flat();
+              const trackCoordinates = trackPoints.map(
+                (point) => [point.lon, point.lat] as [number, number]
+              );
+              const gradeFeatures = trackSegments.flatMap((segment) =>
+                createGradeFeatures(segment)
+              );
+
+              if (gradeFeatures.length === 0) continue;
+
               allTracks.push({
                 segments: trackSegments,
-                color: trackColors[i % trackColors.length],
-                start: trackPoints[0],
-                end: trackPoints[trackPoints.length - 1],
+                gradeFeatures,
+                start: trackCoordinates[0],
+                end: trackCoordinates[trackCoordinates.length - 1],
               });
               // Add to all points for bounds calculation
-              allTrackPoints = allTrackPoints.concat(trackPoints);
+              allTrackPoints = allTrackPoints.concat(trackCoordinates);
             }
           } catch (error) {
             console.error(`Error loading GPX file ${gpxUrls[i]}:`, error);
@@ -270,19 +397,16 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
           map.on("load", () => {
             // Add each track as a separate source/layer with its own color
             allTracks.forEach((track, index) => {
+              const arrowsSourceId = `gpx-track-arrows-source-${index}`;
+              const arrowsLayerId = `gpx-track-arrows-${index}`;
               const sourceId = `gpx-track-${index}`;
               const layerId = `gpx-track-layer-${index}`;
-              const arrowsLayerId = `gpx-track-arrows-${index}`;
 
               map.addSource(sourceId, {
                 type: "geojson",
                 data: {
-                  type: "Feature",
-                  properties: {},
-                  geometry: {
-                    type: "MultiLineString",
-                    coordinates: track.segments,
-                  },
+                  type: "FeatureCollection",
+                  features: track.gradeFeatures,
                 },
               });
 
@@ -295,9 +419,38 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
                   "line-cap": "round",
                 },
                 paint: {
-                  "line-color": track.color,
+                  "line-color": [
+                    "match",
+                    ["get", "gradeClass"],
+                    "down-flat",
+                    "#2f80ed",
+                    "gentle",
+                    "#f2c94c",
+                    "moderate",
+                    "#f2994a",
+                    "hard",
+                    "#e86f2d",
+                    "steep",
+                    "#c2410c",
+                    "#2f80ed",
+                  ],
                   "line-width": 4,
-                  "line-opacity": 0.9,
+                  "line-opacity": 0.8,
+                },
+              });
+
+              map.addSource(arrowsSourceId, {
+                type: "geojson",
+                data: {
+                  type: "Feature",
+                  properties: {},
+                  geometry: {
+                    type: "MultiLineString",
+                    coordinates: track.segments.map(
+                      (segment) =>
+                        segment.map((point) => [point.lon, point.lat])
+                    ),
+                  },
                 },
               });
 
@@ -313,7 +466,7 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
                 map.addLayer({
                   id: arrowsLayerId,
                   type: "symbol",
-                  source: sourceId,
+                  source: arrowsSourceId,
                   layout: {
                     "symbol-placement": "line",
                     "symbol-spacing": 20,
@@ -321,6 +474,9 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
                     "icon-size": 0.5,
                     "icon-allow-overlap": true,
                     "icon-rotation-alignment": "map",
+                  },
+                  paint: {
+                    "icon-opacity": 0.5,
                   },
                 });
               };
@@ -331,7 +487,11 @@ const mapId = `map-viewer-${Math.random().toString(36).substring(2, 9)}`;
               createDotMarker("#00aa44", "Trail start")
                 .setLngLat(track.start)
                 .addTo(map);
-              createDotMarker("#ff0000", "Trail end")
+              createDotMarker(
+                "#ffffff",
+                "Trail end",
+                "conic-gradient(#000 25%, #fff 0 50%, #000 0 75%, #fff 0)"
+              )
                 .setLngLat(track.end)
                 .addTo(map);
             });

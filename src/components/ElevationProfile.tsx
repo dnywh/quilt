@@ -45,6 +45,38 @@ function haversineDistance(
   return R * c;
 }
 
+function getGradeClass(
+  startEle: number,
+  endEle: number,
+  distance: number
+): string {
+  if (distance <= 0) return "down-flat";
+
+  const grade = ((endEle - startEle) / distance) * 100;
+
+  if (grade <= 1) return "down-flat";
+  if (grade <= 3) return "gentle";
+  if (grade <= 7) return "moderate";
+  if (grade <= 12) return "hard";
+  return "steep";
+}
+
+function getGradeColor(gradeClass: string): string {
+  switch (gradeClass) {
+    case "gentle":
+      return "#f2c94c";
+    case "moderate":
+      return "#f2994a";
+    case "hard":
+      return "#e86f2d";
+    case "steep":
+      return "#c2410c";
+    case "down-flat":
+    default:
+      return "#2f80ed";
+  }
+}
+
 /*
  * Layout constants - these define the chart geometry.
  * The SVG viewBox uses these values, and CSS custom properties mirror them.
@@ -63,6 +95,7 @@ const VIEW_BOX_HEIGHT = 100; // Elevation data area
 const VIEW_BOX_EXTENSION = 25; // Extra space below for text coverage
 const VIEW_BOX_EXTENDED = VIEW_BOX_HEIGHT + VIEW_BOX_EXTENSION; // 125
 const ELEVATION_RATIO = VIEW_BOX_HEIGHT / VIEW_BOX_EXTENDED; // 0.8 (80%)
+const COLOUR_CHUNK_DISTANCE = 300;
 
 export default function ElevationProfile({ gpxUrls, mapContainerId }: Props) {
   const [tracks, setTracks] = useState<TrackData[]>([]);
@@ -174,6 +207,50 @@ export default function ElevationProfile({ gpxUrls, mapContainerId }: Props) {
   // Area fill extends to the bottom of the extended viewBox
   const areaD = `${pathD} L ${VIEW_BOX_WIDTH} ${VIEW_BOX_EXTENDED} L 0 ${VIEW_BOX_EXTENDED} Z`;
 
+  const colouredSegments = [];
+  let chunkPoints = [points[0]];
+  let chunkStart = points[0];
+  let chunkDistance = 0;
+
+  for (let i = 1; i < points.length; i++) {
+    const previous = points[i - 1];
+    const point = points[i];
+    const distance = point.distance - previous.distance;
+    chunkDistance += distance;
+    chunkPoints.push(point);
+
+    const isLastPoint = i === points.length - 1;
+    if (chunkDistance >= COLOUR_CHUNK_DISTANCE || isLastPoint) {
+      const chunkEnd = point;
+      const d = chunkPoints
+        .map((chunkPoint, index) => {
+          const x = (chunkPoint.distance / totalDistance) * VIEW_BOX_WIDTH;
+          const y =
+            VIEW_BOX_HEIGHT -
+            ((chunkPoint.ele - minEle) / eleRange) * VIEW_BOX_HEIGHT;
+          return `${index === 0 ? "M" : "L"} ${x} ${y}`;
+        })
+        .join(" ");
+      const startX = (chunkStart.distance / totalDistance) * VIEW_BOX_WIDTH;
+      const endX = (chunkEnd.distance / totalDistance) * VIEW_BOX_WIDTH;
+      const gradeClass = getGradeClass(
+        chunkStart.ele,
+        chunkEnd.ele,
+        chunkDistance
+      );
+
+      colouredSegments.push({
+        d,
+        areaD: `${d} L ${endX} ${VIEW_BOX_EXTENDED} L ${startX} ${VIEW_BOX_EXTENDED} Z`,
+        color: getGradeColor(gradeClass),
+      });
+
+      chunkStart = point;
+      chunkDistance = 0;
+      chunkPoints = [point];
+    }
+  }
+
   // Shared handler for both mouse and touch - finds closest point to X position
   const updateHoverFromClientX = (clientX: number) => {
     if (!chartRef.current) return;
@@ -265,14 +342,25 @@ export default function ElevationProfile({ gpxUrls, mapContainerId }: Props) {
           viewBox={`0 0 ${VIEW_BOX_WIDTH} ${VIEW_BOX_EXTENDED}`}
           preserveAspectRatio="none"
         >
-          <path d={areaD} fill="rgba(255, 0, 0, 0.15)" />
-          <path
-            d={pathD}
-            fill="none"
-            stroke="#ff0000"
-            stroke-width="2"
-            vector-effect="non-scaling-stroke"
-          />
+          <path d={areaD} fill="rgba(0, 0, 0, 0.03)" />
+          {colouredSegments.map((segment, index) => (
+            <path
+              key={`area-${index}`}
+              d={segment.areaD}
+              fill={segment.color}
+              opacity="0.18"
+            />
+          ))}
+          {colouredSegments.map((segment, index) => (
+            <path
+              key={index}
+              d={segment.d}
+              fill="none"
+              stroke={segment.color}
+              stroke-width="2.5"
+              vector-effect="non-scaling-stroke"
+            />
+          ))}
         </svg>
 
         {hoverIndex !== null && (
